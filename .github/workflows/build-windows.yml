@@ -35,8 +35,8 @@ jobs:
         
     - name: Copy EXE to standard location
       run: |
-        mkdir -p target/release
-        cp target/x86_64-pc-windows-msvc/release/easyproject-mcp-server.exe target/release/
+        New-Item -ItemType Directory -Path target/release -Force
+        Copy-Item target/x86_64-pc-windows-msvc/release/easyproject-mcp-server.exe target/release/
         
     - name: Get file size
       id: filesize
