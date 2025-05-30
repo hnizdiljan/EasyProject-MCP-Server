@@ -39,11 +39,17 @@ pub struct ProjectReference {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-#[serde(rename_all = "snake_case")]
 pub enum ProjectStatus {
+    #[serde(rename = "1")]
     Active,
+    #[serde(rename = "5")]
     Closed,
+    #[serde(rename = "9")]
     Archived,
+    #[serde(rename = "15")]
+    Planned,
+    #[serde(rename = "19")]
+    Deleted,
 }
 
 /// Issue (Task) model podle EasyProject API

@@ -1,0 +1,12 @@
+﻿{
+  "mcpServers": {
+    "easyproject": {
+      "command": "C:\\path\\to\\easyproject-mcp-server.exe",
+      "args": [],
+      "env": {
+        "EASYPROJECT_API_KEY": "your-api-key-here",
+        "EASYPROJECT_BASE_URL": "https://your-instance.easyproject.com"
+      }
+    }
+  }
+}

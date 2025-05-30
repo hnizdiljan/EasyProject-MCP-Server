@@ -1,0 +1,123 @@
+name: Build Windows EXE
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+  workflow_dispatch:
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Install Rust
+      uses: actions-rust-lang/setup-rust-toolchain@v1
+      with:
+        toolchain: stable
+        targets: x86_64-pc-windows-msvc
+        
+    - name: Build release
+      run: |
+        cargo build --release --target x86_64-pc-windows-msvc
+        
+    - name: Copy EXE to standard location
+      run: |
+        mkdir -p target/release
+        cp target/x86_64-pc-windows-msvc/release/easyproject-mcp-server.exe target/release/
+        
+    - name: Get file size
+      id: filesize
+      run: |
+        $size = (Get-Item target/release/easyproject-mcp-server.exe).Length
+        $sizeMB = [math]::Round($size / 1MB, 2)
+        echo "size_mb=$sizeMB" >> $env:GITHUB_OUTPUT
+        
+    - name: Create deployment package
+      run: |
+        New-Item -ItemType Directory -Path deployment -Force
+        Copy-Item target/release/easyproject-mcp-server.exe deployment/
+        
+        $buildDate = Get-Date -Format 'yyyy-MM-dd HH:mm:ss'
+        $sizeMB = "${{ steps.filesize.outputs.size_mb }}"
+        
+        $readmeContent = @"
+        # EasyProject MCP Server - GitHub Actions Build
+        
+        **Build Date:** $buildDate
+        **Size:** $sizeMB MB
+        **Architecture:** x86_64 Windows
+        **Built on:** GitHub Actions
+        
+        ## Quick Setup
+        
+        1. Copy ``easyproject-mcp-server.exe`` to your desired location
+        2. Configure Cursor MCP:
+        
+        ```json
+        {
+          "mcpServers": {
+            "easyproject": {
+              "command": "C:\\path\\to\\easyproject-mcp-server.exe",
+              "args": [],
+              "env": {
+                "EASYPROJECT_API_KEY": "your-api-key-here",
+                "EASYPROJECT_BASE_URL": "https://your-instance.easyproject.com"
+              }
+            }
+          }
+        }
+        ```
+        
+        3. Restart Cursor
+        
+        ## Usage
+        
+        In Cursor use:
+        - ``@easyproject list_projects``
+        - ``@easyproject create_issue``
+        - ``@easyproject log_time``
+        
+        ## System Requirements
+        
+        - Windows 10/11 x64
+        - Visual C++ Redistributable 2019+ (usually pre-installed)
+        
+        Built automatically with GitHub Actions ✨
+        "@
+        
+        $readmeContent | Out-File -FilePath "deployment/README.md" -Encoding UTF8
+        
+        $mcpConfig = @"
+        {
+          "mcpServers": {
+            "easyproject": {
+              "command": "C:\\path\\to\\easyproject-mcp-server.exe",
+              "args": [],
+              "env": {
+                "EASYPROJECT_API_KEY": "your-api-key-here",
+                "EASYPROJECT_BASE_URL": "https://your-instance.easyproject.com"
+              }
+            }
+          }
+        }
+        "@
+        
+        $mcpConfig | Out-File -FilePath "deployment/cursor-mcp-config.json" -Encoding UTF8
+        
+    - name: Upload deployment package
+      uses: actions/upload-artifact@v4
+      with:
+        name: easyproject-mcp-server-windows
+        path: deployment/
+        retention-days: 30
+        
+    - name: Display build info
+      run: |
+        Write-Host "Build completed successfully!" -ForegroundColor Green
+        Write-Host "EXE size: ${{ steps.filesize.outputs.size_mb }} MB" -ForegroundColor Cyan
+        Write-Host "Download from Actions artifacts" -ForegroundColor Yellow 

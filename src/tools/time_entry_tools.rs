@@ -126,7 +126,9 @@ impl ToolExecutor for ListTimeEntriesTool {
             args.project_id,
             args.user_id,
             args.limit,
-            args.offset
+            args.offset,
+            args.from_date,
+            args.to_date
         ).await {
             Ok(response) => {
                 let time_entries_json = serde_json::to_string_pretty(&response)?;

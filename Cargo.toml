@@ -13,7 +13,7 @@ serde_json = "1.0"
 tokio = { version = "1.0", features = ["full"] }
 
 # HTTP Client
-reqwest = { version = "0.11", features = ["json", "stream"] }
+reqwest = { version = "0.11", features = ["json", "stream", "rustls-tls"], default-features = false }
 
 # Error handling
 anyhow = "1.0"
@@ -48,4 +48,16 @@ regex = "1.11.1"
 
 [dev-dependencies]
 mockito = "1.2"
-tokio-test = "0.4" 
+tokio-test = "0.4"
+
+# Release optimization pro single-file deployment
+[profile.release]
+opt-level = "z"          # Optimalizace pro velikost
+lto = true               # Link Time Optimization
+codegen-units = 1        # Lepší optimalizace
+panic = "abort"          # Menší binárka
+strip = "symbols"        # Odstranění debug symbolů
+
+# Target-specific konfigurace pro Windows
+[target.'cfg(windows)'.dependencies]
+winapi = { version = "0.3", features = ["winuser", "consoleapi"] } 

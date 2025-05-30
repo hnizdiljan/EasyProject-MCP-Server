@@ -314,12 +314,14 @@ impl EasyProjectClient {
 
     // === TIME ENTRY API METHODS ===
 
-    pub async fn list_time_entries(&self, project_id: Option<i32>, user_id: Option<i32>, limit: Option<u32>, offset: Option<u32>) -> ApiResult<TimeEntriesResponse> {
-        let cache_key = format!("time_entries_{}_{}_{}_{}", 
+    pub async fn list_time_entries(&self, project_id: Option<i32>, user_id: Option<i32>, limit: Option<u32>, offset: Option<u32>, from_date: Option<String>, to_date: Option<String>) -> ApiResult<TimeEntriesResponse> {
+        let cache_key = format!("time_entries_{}_{}_{}_{}_{}_{}",
             project_id.map(|id| id.to_string()).unwrap_or_else(|| "all".to_string()),
             user_id.map(|id| id.to_string()).unwrap_or_else(|| "all".to_string()),
             limit.unwrap_or(25), 
-            offset.unwrap_or(0)
+            offset.unwrap_or(0),
+            from_date.as_ref().unwrap_or(&"none".to_string()),
+            to_date.as_ref().unwrap_or(&"none".to_string())
         );
 
         self.get_cached_or_fetch(&cache_key, "time_entry", async {
@@ -337,6 +339,12 @@ impl EasyProjectClient {
             }
             if let Some(offset) = offset {
                 query_params.push(("offset", offset.to_string()));
+            }
+            if let Some(from_date) = from_date {
+                query_params.push(("from", from_date));
+            }
+            if let Some(to_date) = to_date {
+                query_params.push(("to", to_date));
             }
 
             let request = self.add_auth(self.http_client.get(&url))

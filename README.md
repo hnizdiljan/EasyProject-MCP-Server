@@ -1,6 +1,6 @@
-# EasyProject MCP Server
+# 🚀 EasyProject MCP Server
 
-Model Context Protocol (MCP) server pro integraci s EasyProject API. Tento server umožňuje AI asistentům komunikovat s EasyProject platformou prostřednictvím standardizovaného rozhraní.
+Model Context Protocol server pro integraci s EasyProject API - umožňuje použití EasyProject nástrojů přímo v Cursor AI editoru.
 
 ## 📋 Obsah
 
@@ -508,3 +508,146 @@ MIT License. Viz [LICENSE](LICENSE) soubor pro detaily.
 ---
 
 **Vytvořeno s ❤️ pro EasyProject komunitu**
+
+## ⚡ Rychlý Start
+
+### 1. **Deployment**
+```powershell
+# Použije existující EXE (nejrychlejší)
+.\deploy.ps1 -SkipBuild
+
+# Nebo vynutí nový build
+.\deploy.ps1 -Force
+
+# Rychlý deployment
+.\quick-deploy.ps1
+```
+
+### 2. **Konfigurace Cursor**
+Zkopírujte `deployment/easyproject-mcp-server.exe` kamkoliv a nastavte v Cursor:
+
+```json
+{
+  "mcpServers": {
+    "easyproject": {
+      "command": "C:\\path\\to\\easyproject-mcp-server.exe",
+      "args": [],
+      "env": {
+        "EASYPROJECT_API_KEY": "your-api-key",
+        "EASYPROJECT_BASE_URL": "https://your-instance.easyproject.com"
+      }
+    }
+  }
+}
+```
+
+### 3. **Testování**
+V Cursor můžete použít:
+```
+@easyproject list_projects    # Seznam projektů
+@easyproject create_issue     # Nový úkol  
+@easyproject log_time         # Logování času
+```
+
+## 🔧 Deployment Skripty
+
+| Skript | Použití | Popis |
+|--------|---------|--------|
+| `deploy.ps1` | Hlavní deployment | Inteligentní build + kompletní balíček |
+| `quick-deploy.ps1` | Rychlý deployment | Pouze kopírování EXE |
+| `setup-build-tools.ps1` | Setup prostředí | Instalace build nástrojů |
+
+### **Troubleshooting Build Problémů**
+
+Pokud build selhává s chybou `ring crate` nebo `gcc.exe`:
+
+```powershell
+# Rychlé řešení - použije existující EXE
+.\deploy.ps1 -SkipBuild
+
+# Oprava build prostředí
+.\setup-build-tools.ps1
+
+# Manuální oprava
+rustup toolchain install stable-x86_64-pc-windows-msvc
+winget install Microsoft.VisualStudio.2022.BuildTools
+```
+
+## 🎯 Single-File Deployment
+
+**EXE soubor (15.29 MB) je kompletně samostatný:**
+- ✅ Všechny Rust dependencies zabudované
+- ✅ TLS support (rust-native, bez OpenSSL)
+- ✅ Žádné externí DLL dependencies
+- ✅ Portable - zkopírujte kamkoliv a spusťte
+
+**Systémové požadavky:**
+- Windows 10/11 x64
+- Visual C++ Redistributable 2019+ (obvykle již nainstalován)
+
+## 📚 Dokumentace
+
+- [**DEPLOYMENT.md**](DEPLOYMENT.md) - Kompletní deployment guide
+- [**API Reference**](src/tools/) - Dokumentace jednotlivých nástrojů
+- [**Swagger API**](easy_swagger.yml) - EasyProject API dokumentace
+
+## 🛠 Vývoj
+
+### **Build z sources:**
+```bash
+git clone https://github.com/your-repo/easyproject-mcp-server
+cd easyproject-mcp-server
+cargo build --release
+```
+
+### **Testování:**
+```bash
+cargo test
+cargo check
+```
+
+### **Lokální deployment:**
+```powershell
+cargo build --release
+.\quick-deploy.ps1
+```
+
+## 🔍 Architektura
+
+Projekt dodržuje principy **SOLID**, **KISS** a **CLEAN Code**:
+
+```
+src/
+├── main.rs              # Entry point
+├── api/
+│   ├── client.rs        # HTTP klient pro EasyProject API
+│   └── models.rs        # Datové modely
+├── tools/               # MCP nástroje
+│   ├── project_tools.rs # Správa projektů
+│   ├── issue_tools.rs   # Správa úkolů
+│   └── time_tools.rs    # Časové záznamy
+└── utils/
+    └── formatting.rs    # Formátování výstupů
+```
+
+## 📄 Licence
+
+MIT License - viz [LICENSE](LICENSE) soubor.
+
+## 🤝 Přispívání
+
+1. Fork projektu
+2. Vytvořte feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit změny (`git commit -m 'Add amazing feature'`)
+4. Push do branch (`git push origin feature/amazing-feature`)
+5. Otevřete Pull Request
+
+## 📞 Podpora
+
+- 🐛 **Issues:** [GitHub Issues](https://github.com/your-repo/issues)
+- 📖 **Dokumentace:** [DEPLOYMENT.md](DEPLOYMENT.md)
+- 💬 **Diskuze:** [GitHub Discussions](https://github.com/your-repo/discussions)
+
+---
+
+**Vyvinuto s ❤️ pro EasyProject komunitu**

@@ -202,7 +202,7 @@ impl ToolExecutor for GenerateProjectReportTool {
         
         // 3. Časové záznamy (pokud je požadováno)
         if include_time_entries {
-            match self.api_client.list_time_entries(Some(args.project_id), None, Some(1000), None).await {
+            match self.api_client.list_time_entries(Some(args.project_id), None, Some(1000), None, args.from_date.clone(), args.to_date.clone()).await {
                 Ok(time_entries_response) => {
                     let time_entries = &time_entries_response.time_entries;
                     
@@ -488,7 +488,7 @@ impl ToolExecutor for GetDashboardDataTool {
         }
         
         // 3. Přehled časových záznamů
-        match self.api_client.list_time_entries(None, args.user_id, Some(1000), None).await {
+        match self.api_client.list_time_entries(None, args.user_id, Some(1000), None, args.from_date.clone(), args.to_date.clone()).await {
             Ok(time_entries_response) => {
                 let mut time_entries = time_entries_response.time_entries;
                 
