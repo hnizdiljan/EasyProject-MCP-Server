@@ -1,14 +1,14 @@
 use std::time::Duration;
-use reqwest::{Client, RequestBuilder, Response};
+use reqwest::{Client, RequestBuilder};
 use serde_json::Value;
-use tracing::{debug, error, info, warn};
+use tracing::{debug, info};
 use governor::{Quota, RateLimiter, state::{InMemoryState, NotKeyed}, clock::DefaultClock};
 use moka::future::Cache;
 use std::sync::Arc;
 use std::num::NonZeroU32;
 
-use crate::config::{AppConfig, AuthType};
-use super::error::{ApiError, ApiResult, ApiErrorResponse};
+use crate::config::AppConfig;
+use super::error::{ApiError, ApiResult};
 use super::models::*;
 
 #[derive(Debug, Clone)]
@@ -138,7 +138,7 @@ impl EasyProjectClient {
         );
 
         self.get_cached_or_fetch(&cache_key, "project", async {
-            let mut url = format!("{}/projects.json", self.base_url);
+            let url = format!("{}/projects.json", self.base_url);
             let mut query_params = Vec::new();
 
             if let Some(limit) = limit {

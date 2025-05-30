@@ -1,9 +1,14 @@
 # EasyProject MCP Server - Smart Deployment Script
-# Pouziti: .\deploy.ps1
+# Pouziti: 
+#   .\deploy.ps1              # Normalni build a deploy
+#   .\deploy.ps1 -Force       # Vynuti novy build
+#   .\deploy.ps1 -SkipBuild   # Pouzije existujici EXE
+#   .\deploy.ps1 -CleanCache  # Vycisti cache a skonci
 
 param(
-    [switch]$Force,     # Vynuti novy build
-    [switch]$SkipBuild  # Pouzije existujici EXE
+    [switch]$Force,        # Vynuti novy build
+    [switch]$SkipBuild,    # Pouzije existujici EXE
+    [switch]$CleanCache    # Pouze vycisti cache a skonci
 )
 
 Write-Host "EasyProject MCP Server - Smart Deployment" -ForegroundColor Green
@@ -21,117 +26,155 @@ function Get-FileSizeMB($filePath) {
     return 0
 }
 
-function Clear-RingCrateCache {
-    Write-Host "  Clearing ring crate cache..." -ForegroundColor Yellow
-    try {
-        $ringPath = "$env:CARGO_HOME\registry\src\index.crates.io-1949cf8c6b5b557f\ring-0.17.14"
-        if (Test-Path $ringPath) {
-            Remove-Item -Recurse -Force $ringPath -ErrorAction SilentlyContinue
-            Write-Host "  Ring cache cleared" -ForegroundColor Cyan
-        }
-        
-        # Vymazat temp build soubory
-        $tempPaths = @(
-            "$env:TEMP\ring-*",
-            "$env:TMP\ring-*"
-        )
-        foreach ($path in $tempPaths) {
-            Get-ChildItem $path -ErrorAction SilentlyContinue | Remove-Item -Force -Recurse -ErrorAction SilentlyContinue
+function Clear-AllCache {
+    Write-Host "Clearing all Rust/Cargo cache..." -ForegroundColor Yellow
+    
+    # Cargo clean
+    Write-Host "  Running cargo clean..." -ForegroundColor Cyan
+    cargo clean | Out-Null
+    
+    # Vymazat target adresář
+    if (Test-Path "target") {
+        Write-Host "  Removing target directory..." -ForegroundColor Cyan
+        Remove-Item -Path "target" -Recurse -Force -ErrorAction SilentlyContinue
+    }
+    
+    # Vyčistit cargo cache
+    $cargoHome = $env:CARGO_HOME
+    if (-not $cargoHome) {
+        $cargoHome = "$env:USERPROFILE\.cargo"
+    }
+    
+    # Ring crate cache
+    if (Test-Path "$cargoHome\registry\src") {
+        $indexDirs = Get-ChildItem -Path "$cargoHome\registry\src" -Directory -Name "index.crates.io-*" -ErrorAction SilentlyContinue
+        foreach ($indexDir in $indexDirs) {
+            $fullIndexPath = Join-Path "$cargoHome\registry\src" $indexDir
+            $ringDirs = Get-ChildItem -Path $fullIndexPath -Directory -Name "ring-*" -ErrorAction SilentlyContinue
+            foreach ($ringDir in $ringDirs) {
+                if ($ringDir) {
+                    $fullRingPath = Join-Path $fullIndexPath $ringDir.Name
+                    Write-Host "  Removing ring cache: $fullRingPath" -ForegroundColor Cyan
+                    Remove-Item -Path $fullRingPath -Recurse -Force -ErrorAction SilentlyContinue
+                }
+            }
         }
     }
-    catch {
-        Write-Host "  Warning: Could not clear all ring cache: $($_.Exception.Message)" -ForegroundColor Yellow
+    
+    # Build cache
+    $buildCachePath = "$cargoHome\registry\.cache"
+    if (Test-Path $buildCachePath) {
+        Write-Host "  Clearing cargo build cache..." -ForegroundColor Cyan
+        Remove-Item -Path $buildCachePath -Recurse -Force -ErrorAction SilentlyContinue
     }
+    
+    # Git cache
+    $gitCachePath = "$cargoHome\git"
+    if (Test-Path $gitCachePath) {
+        Write-Host "  Clearing cargo git cache..." -ForegroundColor Cyan
+        Remove-Item -Path $gitCachePath -Recurse -Force -ErrorAction SilentlyContinue
+    }
+    
+    Write-Host "  Cache cleared!" -ForegroundColor Green
 }
 
 function Invoke-OptimizedBuild {
-    Write-Host "Attempting optimized build..." -ForegroundColor Yellow
+    Write-Host "Building with MSVC toolchain..." -ForegroundColor Yellow
     
-    # Pokus 1: Ring cache clear + MSVC toolchain
-    Write-Host "  Trying MSVC toolchain with clean ring cache..." -ForegroundColor Cyan
     try {
-        Clear-RingCrateCache
-        $env:RUSTFLAGS = "-C target-cpu=native"
-        $env:RING_PREGENERATE_ASM = "1"
-        $env:CARGO_BUILD_JOBS = "1"  # Single-threaded pro ring
+        # Důkladnější vyčištění build cache
+        Write-Host "  Cleaning build cache thoroughly..." -ForegroundColor Cyan
+        
+        # Vyčistit cargo cache
+        cargo clean | Out-Null
+        
+        # Vymazat target adresář úplně (řeší problém s ring crate)
+        if (Test-Path "target") {
+            Write-Host "  Removing target directory..." -ForegroundColor Cyan
+            Remove-Item -Path "target" -Recurse -Force -ErrorAction SilentlyContinue
+            Start-Sleep -Seconds 1
+        }
+        
+        # Vyčistit cargo registry cache pro ring (častý problém)
+        $cargoHome = $env:CARGO_HOME
+        if (-not $cargoHome) {
+            $cargoHome = "$env:USERPROFILE\.cargo"
+        }
+        
+        $ringCachePath = "$cargoHome\registry\src\index.crates.io-*\ring-*"
+        if (Test-Path $ringCachePath) {
+            Write-Host "  Clearing ring crate cache..." -ForegroundColor Cyan
+            Remove-Item -Path $ringCachePath -Recurse -Force -ErrorAction SilentlyContinue
+        }
+        
+        # Vyčistit build cache
+        $buildCachePath = "$cargoHome\registry\.cache"
+        if (Test-Path $buildCachePath) {
+            Write-Host "  Clearing cargo build cache..." -ForegroundColor Cyan
+            Remove-Item -Path $buildCachePath -Recurse -Force -ErrorAction SilentlyContinue
+        }
+        
+        # Počkat chvíli aby se uvolnily file handles
+        Start-Sleep -Seconds 2
+        
+        # Build s MSVC targetem
+        Write-Host "  Building with x86_64-pc-windows-msvc..." -ForegroundColor Cyan
+        
+        # Nastavit environment pro build
+        $env:CARGO_INCREMENTAL = "0"  # Vypnout incremental build
+        $env:RUST_BACKTRACE = "1"     # Pro lepší error reporting
         
         $result = Start-Process -FilePath "cargo" -ArgumentList "build", "--release", "--target", "x86_64-pc-windows-msvc" -Wait -PassThru -NoNewWindow -RedirectStandardError "build_error.log"
         
         if ($result.ExitCode -eq 0) {
             $msvcPath = "target\x86_64-pc-windows-msvc\release\easyproject-mcp-server.exe"
             if (Test-Path $msvcPath) {
+                # Zkopírujeme do standardního umístění
                 if (!(Test-Path "target\release")) {
                     New-Item -ItemType Directory -Path "target\release" -Force | Out-Null
                 }
                 Copy-Item $msvcPath $targetExe -Force
-                Write-Host "  MSVC build successful!" -ForegroundColor Green
+                
+                # Vyčistit environment
+                Remove-Item Env:\CARGO_INCREMENTAL -ErrorAction SilentlyContinue
+                Remove-Item Env:\RUST_BACKTRACE -ErrorAction SilentlyContinue
+                
+                Write-Host "  Build successful!" -ForegroundColor Green
                 return $true
             }
         }
-    }
-    catch {
-        Write-Host "  MSVC build failed: $($_.Exception.Message)" -ForegroundColor Yellow
-    }
-    
-    # Pokus 2: Ring workaround s retry
-    Write-Host "  Trying ring workaround with retry..." -ForegroundColor Cyan
-    for ($i = 1; $i -le 3; $i++) {
-        try {
-            Write-Host "    Attempt $i/3..." -ForegroundColor Gray
-            Clear-RingCrateCache
-            Start-Sleep -Seconds 2  # Krátká pauza
-            
-            $env:RUSTFLAGS = ""
-            $env:RING_PREGENERATE_ASM = "1"
-            $env:CARGO_BUILD_JOBS = "1"
-            
-            $result = Start-Process -FilePath "cargo" -ArgumentList "build", "--release" -Wait -PassThru -NoNewWindow -RedirectStandardError "build_error2.log"
-            
-            if ($result.ExitCode -eq 0 -and (Test-Path $targetExe)) {
-                Write-Host "  Ring workaround successful on attempt $i!" -ForegroundColor Green
-                return $true
-            }
-        }
-        catch {
-            Write-Host "    Attempt $i failed: $($_.Exception.Message)" -ForegroundColor Yellow
-        }
-    }
-    
-    # Pokus 3: Build bez optimalizaci a ring dependency
-    Write-Host "  Trying minimal build without optimizations..." -ForegroundColor Cyan
-    try {
-        Clear-RingCrateCache
-        $env:RUSTFLAGS = "-C opt-level=1"
-        $env:RING_PREGENERATE_ASM = "1"
-        $env:CARGO_BUILD_JOBS = "1"
         
-        $result = Start-Process -FilePath "cargo" -ArgumentList "build", "--release" -Wait -PassThru -NoNewWindow
-        
-        if ($result.ExitCode -eq 0 -and (Test-Path $targetExe)) {
-            Write-Host "  Minimal build successful!" -ForegroundColor Green
-            return $true
+        # Pokud se build nepodařil, zobrazíme chybu
+        if (Test-Path "build_error.log") {
+            Write-Host "  Build failed. Error log:" -ForegroundColor Red
+            Get-Content "build_error.log" | Write-Host -ForegroundColor Yellow
         }
-    }
-    catch {
-        Write-Host "  Minimal build failed: $($_.Exception.Message)" -ForegroundColor Yellow
+        
+        # Vyčistit environment i při chybě
+        Remove-Item Env:\CARGO_INCREMENTAL -ErrorAction SilentlyContinue
+        Remove-Item Env:\RUST_BACKTRACE -ErrorAction SilentlyContinue
+        
+    } catch {
+        Write-Host "  Build failed: $($_.Exception.Message)" -ForegroundColor Red
     }
     
-    Write-Host "  All build attempts failed" -ForegroundColor Red
+    Write-Host "  Build failed" -ForegroundColor Red
     Write-Host ""
-    Write-Host "=== RING CRATE TROUBLESHOOTING ===" -ForegroundColor Yellow
-    Write-Host "The ring crate (cryptography library) is failing to build." -ForegroundColor White
-    Write-Host "This is a common issue on Windows. Solutions:" -ForegroundColor White
+    Write-Host "=== BUILD TROUBLESHOOTING ===" -ForegroundColor Yellow
+    Write-Host "The build process failed. Trying solutions:" -ForegroundColor White
     Write-Host ""
-    Write-Host "1. Install Visual Studio Build Tools:" -ForegroundColor Cyan
-    Write-Host "   winget install Microsoft.VisualStudio.2022.BuildTools" -ForegroundColor Gray
+    Write-Host "1. Clear all Rust/Cargo cache:" -ForegroundColor Cyan
+    Write-Host "   cargo clean && rmdir /s target" -ForegroundColor Gray
     Write-Host ""
-    Write-Host "2. Setup build environment:" -ForegroundColor Cyan
-    Write-Host "   .\setup-build-tools.ps1" -ForegroundColor Gray
+    Write-Host "2. Update Rust toolchain:" -ForegroundColor Cyan
+    Write-Host "   rustup update stable" -ForegroundColor Gray
     Write-Host ""
-    Write-Host "3. Use existing EXE (if available):" -ForegroundColor Cyan
+    Write-Host "3. Reinstall MSVC toolchain:" -ForegroundColor Cyan
+    Write-Host "   rustup target remove x86_64-pc-windows-msvc" -ForegroundColor Gray
+    Write-Host "   rustup target add x86_64-pc-windows-msvc" -ForegroundColor Gray
+    Write-Host ""
+    Write-Host "4. Use existing EXE (if available):" -ForegroundColor Cyan
     Write-Host "   .\deploy.ps1 -SkipBuild" -ForegroundColor Gray
-    Write-Host ""
-    Write-Host "4. Restart terminal and try again" -ForegroundColor Cyan
     Write-Host ""
     return $false
 }
@@ -235,6 +278,15 @@ Pro ladeni spustte EXE z Command Line.
     
     $mcpConfig | Out-File -FilePath "$deployDir\cursor-mcp-config.json" -Encoding UTF8
     Write-Host "  MCP config template updated" -ForegroundColor Cyan
+}
+
+# Pokud je zadán pouze CleanCache, vyčisti a skonči
+if ($CleanCache) {
+    Clear-AllCache
+    Write-Host ""
+    Write-Host "Cache cleared successfully!" -ForegroundColor Green
+    Write-Host "You can now run: .\deploy.ps1 -Force" -ForegroundColor Yellow
+    exit 0
 }
 
 # Hlavni logika

@@ -21,7 +21,15 @@ jobs:
         toolchain: stable
         targets: x86_64-pc-windows-msvc
         
+    - name: Clean cache thoroughly
+      run: |
+        cargo clean
+        if (Test-Path target) { Remove-Item -Path target -Recurse -Force }
+        
     - name: Build release
+      env:
+        CARGO_INCREMENTAL: 0
+        RUST_BACKTRACE: 1  
       run: |
         cargo build --release --target x86_64-pc-windows-msvc
         

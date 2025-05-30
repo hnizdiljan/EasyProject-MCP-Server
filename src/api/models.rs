@@ -39,17 +39,40 @@ pub struct ProjectReference {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(from = "i32", into = "i32")]
 pub enum ProjectStatus {
-    #[serde(rename = "1")]
     Active,
-    #[serde(rename = "5")]
     Closed,
-    #[serde(rename = "9")]
     Archived,
-    #[serde(rename = "15")]
     Planned,
-    #[serde(rename = "19")]
     Deleted,
+    Unknown(i32),
+}
+
+impl From<i32> for ProjectStatus {
+    fn from(value: i32) -> Self {
+        match value {
+            1 => ProjectStatus::Active,
+            5 => ProjectStatus::Closed,
+            9 => ProjectStatus::Archived,
+            15 => ProjectStatus::Planned,
+            19 => ProjectStatus::Deleted,
+            _ => ProjectStatus::Unknown(value),
+        }
+    }
+}
+
+impl Into<i32> for ProjectStatus {
+    fn into(self) -> i32 {
+        match self {
+            ProjectStatus::Active => 1,
+            ProjectStatus::Closed => 5,
+            ProjectStatus::Archived => 9,
+            ProjectStatus::Planned => 15,
+            ProjectStatus::Deleted => 19,
+            ProjectStatus::Unknown(value) => value,
+        }
+    }
 }
 
 /// Issue (Task) model podle EasyProject API

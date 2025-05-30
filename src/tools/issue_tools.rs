@@ -5,7 +5,6 @@ use tracing::{debug, error, info};
 use chrono::NaiveDate;
 
 use crate::api::{EasyProjectClient, CreateIssueRequest, CreateIssue};
-use crate::config::AppConfig;
 use crate::mcp::protocol::{CallToolResult, ToolResult};
 use super::executor::ToolExecutor;
 
@@ -13,12 +12,11 @@ use super::executor::ToolExecutor;
 
 pub struct ListIssuesTool {
     api_client: EasyProjectClient,
-    config: AppConfig,
 }
 
 impl ListIssuesTool {
-    pub fn new(api_client: EasyProjectClient, config: AppConfig) -> Self {
-        Self { api_client, config }
+    pub fn new(api_client: EasyProjectClient, _config: crate::config::AppConfig) -> Self {
+        Self { api_client }
     }
 }
 
@@ -78,7 +76,7 @@ impl ToolExecutor for ListIssuesTool {
         } else {
             ListIssuesArgs {
                 project_id: None,
-                limit: Some(self.config.tools.issues.default_limit),
+                limit: Some(25), // výchozí limit
                 offset: None,
                 include: None,
             }
@@ -114,12 +112,11 @@ impl ToolExecutor for ListIssuesTool {
 
 pub struct GetIssueTool {
     api_client: EasyProjectClient,
-    config: AppConfig,
 }
 
 impl GetIssueTool {
-    pub fn new(api_client: EasyProjectClient, config: AppConfig) -> Self {
-        Self { api_client, config }
+    pub fn new(api_client: EasyProjectClient, _config: crate::config::AppConfig) -> Self {
+        Self { api_client }
     }
 }
 
@@ -191,12 +188,11 @@ impl ToolExecutor for GetIssueTool {
 
 pub struct CreateIssueTool {
     api_client: EasyProjectClient,
-    config: AppConfig,
 }
 
 impl CreateIssueTool {
-    pub fn new(api_client: EasyProjectClient, config: AppConfig) -> Self {
-        Self { api_client, config }
+    pub fn new(api_client: EasyProjectClient, _config: crate::config::AppConfig) -> Self {
+        Self { api_client }
     }
 }
 
@@ -356,12 +352,11 @@ impl ToolExecutor for CreateIssueTool {
 
 pub struct UpdateIssueTool {
     api_client: EasyProjectClient,
-    config: AppConfig,
 }
 
 impl UpdateIssueTool {
-    pub fn new(api_client: EasyProjectClient, config: AppConfig) -> Self {
-        Self { api_client, config }
+    pub fn new(api_client: EasyProjectClient, _config: crate::config::AppConfig) -> Self {
+        Self { api_client }
     }
 }
 
@@ -512,12 +507,11 @@ impl ToolExecutor for UpdateIssueTool {
 
 pub struct AssignIssueTool {
     api_client: EasyProjectClient,
-    config: AppConfig,
 }
 
 impl AssignIssueTool {
-    pub fn new(api_client: EasyProjectClient, config: AppConfig) -> Self {
-        Self { api_client, config }
+    pub fn new(api_client: EasyProjectClient, _config: crate::config::AppConfig) -> Self {
+        Self { api_client }
     }
 }
 
@@ -572,7 +566,8 @@ impl ToolExecutor for AssignIssueTool {
         };
         
         // Delegujeme na UpdateIssueTool
-        let update_tool = UpdateIssueTool::new(self.api_client.clone(), self.config.clone());
+        let default_config = crate::config::AppConfig::default();
+        let update_tool = UpdateIssueTool::new(self.api_client.clone(), default_config);
         let result = update_tool.execute(Some(serde_json::to_value(update_args)?)).await?;
         
         // Upravíme zprávu pro lepší kontext
@@ -595,12 +590,11 @@ impl ToolExecutor for AssignIssueTool {
 
 pub struct CompleteIssueTool {
     api_client: EasyProjectClient,
-    config: AppConfig,
 }
 
 impl CompleteIssueTool {
-    pub fn new(api_client: EasyProjectClient, config: AppConfig) -> Self {
-        Self { api_client, config }
+    pub fn new(api_client: EasyProjectClient, _config: crate::config::AppConfig) -> Self {
+        Self { api_client }
     }
 }
 
@@ -663,7 +657,8 @@ impl ToolExecutor for CompleteIssueTool {
         };
         
         // Delegujeme na UpdateIssueTool
-        let update_tool = UpdateIssueTool::new(self.api_client.clone(), self.config.clone());
+        let default_config = crate::config::AppConfig::default();
+        let update_tool = UpdateIssueTool::new(self.api_client.clone(), default_config);
         let result = update_tool.execute(Some(serde_json::to_value(update_args)?)).await?;
         
         // Upravíme zprávu pro lepší kontext

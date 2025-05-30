@@ -50,7 +50,7 @@ async fn main() -> Result<()> {
     }
 }
 
-fn init_logging(config: &AppConfig) -> Result<()> {
+fn init_logging(_config: &AppConfig) -> Result<()> {
     let subscriber = tracing_subscriber::registry()
         .with(
             tracing_subscriber::fmt::layer()

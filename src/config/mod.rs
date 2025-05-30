@@ -1,6 +1,6 @@
 use anyhow::{Result, Context};
 use serde::{Deserialize, Serialize};
-use std::{collections::HashMap, time::Duration};
+use std::time::Duration;
 use url::Url;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -161,17 +161,20 @@ impl AppConfig {
     }
     
     fn try_load_config() -> Result<Self> {
-        let mut settings = config::Config::builder()
+        let settings = config::Config::builder()
             .add_source(config::File::with_name("config").required(false))
-            .add_source(config::Environment::with_prefix("EASYPROJECT_MCP"))
-            .build()
-            .context("Nepodařilo se načíst konfiguraci")?;
+            .add_source(config::Environment::with_prefix("EASYPROJECT_MCP"));
 
         // Přepsat API klíč z environment proměnné pokud existuje
-        if let Ok(api_key) = std::env::var("EASYPROJECT_API_KEY") {
-            settings.set("easyproject.api_key", api_key)
-                .context("Nepodařilo se nastavit API klíč z environment proměnné")?;
-        }
+        let settings = if let Ok(api_key) = std::env::var("EASYPROJECT_API_KEY") {
+            settings.set_override("easyproject.api_key", api_key)
+                .context("Nepodařilo se nastavit API klíč z environment proměnné")?
+        } else {
+            settings
+        };
+
+        let settings = settings.build()
+            .context("Nepodařilo se načíst konfiguraci")?;
 
         let config: AppConfig = settings
             .try_deserialize()

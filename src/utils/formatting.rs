@@ -9,6 +9,7 @@ pub fn format_project(project: &Project) -> String {
         ProjectStatus::Archived => "Archivovaný",
         ProjectStatus::Planned => "Plánovaný",
         ProjectStatus::Deleted => "Smazaný",
+        ProjectStatus::Unknown(status_id) => &format!("Neznámý ({})", status_id),
     };
     
     let mut result = format!(
@@ -194,6 +195,7 @@ pub fn format_project_list(projects: &[Project]) -> String {
             ProjectStatus::Archived => "Archivovaný",
             ProjectStatus::Planned => "Plánovaný",
             ProjectStatus::Deleted => "Smazaný",
+            ProjectStatus::Unknown(status_id) => &format!("Neznámý ({})", status_id),
         };
         
         result.push_str(&format!(

@@ -119,7 +119,7 @@ impl ToolRegistry {
                     schema_type: "object".to_string(),
                     properties: Some(tool.input_schema()),
                     required: None,
-                    additionalProperties: Some(false),
+                    additional_properties: Some(false),
                 },
             })
             .collect()

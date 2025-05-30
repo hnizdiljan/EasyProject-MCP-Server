@@ -145,7 +145,8 @@ pub struct ToolInputSchema {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub required: Option<Vec<String>>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub additionalProperties: Option<bool>,
+    #[serde(rename = "additionalProperties")]
+    pub additional_properties: Option<bool>,
 }
 
 /// Tool Call Request/Response
@@ -260,7 +261,7 @@ impl ToolInputSchema {
             schema_type: "object".to_string(),
             properties: None,
             required: None,
-            additionalProperties: Some(false),
+            additional_properties: Some(false),
         }
     }
     

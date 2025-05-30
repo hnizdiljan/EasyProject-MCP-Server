@@ -1,10 +1,9 @@
 use async_trait::async_trait;
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
 use serde_json::{json, Value};
 use tracing::{debug, error, info};
 
 use crate::api::EasyProjectClient;
-use crate::config::AppConfig;
 use crate::mcp::protocol::{CallToolResult, ToolResult};
 use super::executor::ToolExecutor;
 
@@ -12,12 +11,11 @@ use super::executor::ToolExecutor;
 
 pub struct ListUsersTool {
     api_client: EasyProjectClient,
-    config: AppConfig,
 }
 
 impl ListUsersTool {
-    pub fn new(api_client: EasyProjectClient, config: AppConfig) -> Self {
-        Self { api_client, config }
+    pub fn new(api_client: EasyProjectClient, _config: crate::config::AppConfig) -> Self {
+        Self { api_client }
     }
 }
 
@@ -60,7 +58,7 @@ impl ToolExecutor for ListUsersTool {
             serde_json::from_value(args)?
         } else {
             ListUsersArgs {
-                limit: Some(self.config.tools.users.default_limit),
+                limit: Some(25),
                 offset: None,
             }
         };
@@ -95,12 +93,11 @@ impl ToolExecutor for ListUsersTool {
 
 pub struct GetUserTool {
     api_client: EasyProjectClient,
-    config: AppConfig,
 }
 
 impl GetUserTool {
-    pub fn new(api_client: EasyProjectClient, config: AppConfig) -> Self {
-        Self { api_client, config }
+    pub fn new(api_client: EasyProjectClient, _config: crate::config::AppConfig) -> Self {
+        Self { api_client }
     }
 }
 
@@ -165,12 +162,11 @@ impl ToolExecutor for GetUserTool {
 
 pub struct GetUserWorkloadTool {
     api_client: EasyProjectClient,
-    config: AppConfig,
 }
 
 impl GetUserWorkloadTool {
-    pub fn new(api_client: EasyProjectClient, config: AppConfig) -> Self {
-        Self { api_client, config }
+    pub fn new(api_client: EasyProjectClient, _config: crate::config::AppConfig) -> Self {
+        Self { api_client }
     }
 }
 

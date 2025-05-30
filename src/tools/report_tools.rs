@@ -1,11 +1,10 @@
 use async_trait::async_trait;
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
 use serde_json::{json, Value};
 use tracing::{debug, error, info};
-use chrono::{DateTime, Utc, NaiveDate, Local};
+use chrono::{Utc, Local};
 
 use crate::api::EasyProjectClient;
-use crate::config::AppConfig;
 use crate::mcp::protocol::{CallToolResult, ToolResult};
 use super::executor::ToolExecutor;
 
@@ -13,12 +12,11 @@ use super::executor::ToolExecutor;
 
 pub struct GenerateProjectReportTool {
     api_client: EasyProjectClient,
-    config: AppConfig,
 }
 
 impl GenerateProjectReportTool {
-    pub fn new(api_client: EasyProjectClient, config: AppConfig) -> Self {
-        Self { api_client, config }
+    pub fn new(api_client: EasyProjectClient, _config: crate::config::AppConfig) -> Self {
+        Self { api_client }
     }
 }
 
@@ -304,12 +302,11 @@ impl ToolExecutor for GenerateProjectReportTool {
 
 pub struct GetDashboardDataTool {
     api_client: EasyProjectClient,
-    config: AppConfig,
 }
 
 impl GetDashboardDataTool {
-    pub fn new(api_client: EasyProjectClient, config: AppConfig) -> Self {
-        Self { api_client, config }
+    pub fn new(api_client: EasyProjectClient, _config: crate::config::AppConfig) -> Self {
+        Self { api_client }
     }
 }
 

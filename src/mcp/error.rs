@@ -128,8 +128,8 @@ impl JsonRpcError {
 impl From<McpError> for JsonRpcError {
     fn from(error: McpError) -> Self {
         match error {
-            McpError::Protocol(msg) => JsonRpcError::invalid_request(),
-            McpError::InvalidMessage(msg) => JsonRpcError::parse_error(),
+            McpError::Protocol(_msg) => JsonRpcError::invalid_request(),
+            McpError::InvalidMessage(_msg) => JsonRpcError::parse_error(),
             McpError::UnknownMethod(method) => JsonRpcError::method_not_found(&method),
             McpError::InvalidParams(msg) => JsonRpcError::invalid_params(&msg),
             McpError::ToolNotFound(tool) => JsonRpcError::tool_not_found(&tool),

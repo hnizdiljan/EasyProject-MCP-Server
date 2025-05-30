@@ -1,10 +1,9 @@
 use async_trait::async_trait;
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
 use serde_json::{json, Value};
 use tracing::{debug, error, info};
 
 use crate::api::{EasyProjectClient, CreateProjectRequest, CreateProject};
-use crate::config::AppConfig;
 use crate::mcp::protocol::{CallToolResult, ToolResult};
 use super::executor::ToolExecutor;
 
@@ -12,12 +11,11 @@ use super::executor::ToolExecutor;
 
 pub struct ListProjectsTool {
     api_client: EasyProjectClient,
-    config: AppConfig,
 }
 
 impl ListProjectsTool {
-    pub fn new(api_client: EasyProjectClient, config: AppConfig) -> Self {
-        Self { api_client, config }
+    pub fn new(api_client: EasyProjectClient, _config: crate::config::AppConfig) -> Self {
+        Self { api_client }
     }
 }
 
@@ -66,9 +64,9 @@ impl ToolExecutor for ListProjectsTool {
             serde_json::from_value(args)?
         } else {
             ListProjectsArgs {
-                limit: Some(self.config.tools.projects.default_limit),
+                limit: Some(25),
                 offset: None,
-                include_archived: Some(self.config.tools.projects.include_archived),
+                include_archived: Some(false),
             }
         };
         
@@ -102,12 +100,11 @@ impl ToolExecutor for ListProjectsTool {
 
 pub struct GetProjectTool {
     api_client: EasyProjectClient,
-    config: AppConfig,
 }
 
 impl GetProjectTool {
-    pub fn new(api_client: EasyProjectClient, config: AppConfig) -> Self {
-        Self { api_client, config }
+    pub fn new(api_client: EasyProjectClient, _config: crate::config::AppConfig) -> Self {
+        Self { api_client }
     }
 }
 
@@ -179,12 +176,11 @@ impl ToolExecutor for GetProjectTool {
 
 pub struct CreateProjectTool {
     api_client: EasyProjectClient,
-    config: AppConfig,
 }
 
 impl CreateProjectTool {
-    pub fn new(api_client: EasyProjectClient, config: AppConfig) -> Self {
-        Self { api_client, config }
+    pub fn new(api_client: EasyProjectClient, _config: crate::config::AppConfig) -> Self {
+        Self { api_client }
     }
 }
 
@@ -315,12 +311,11 @@ impl ToolExecutor for CreateProjectTool {
 
 pub struct UpdateProjectTool {
     api_client: EasyProjectClient,
-    config: AppConfig,
 }
 
 impl UpdateProjectTool {
-    pub fn new(api_client: EasyProjectClient, config: AppConfig) -> Self {
-        Self { api_client, config }
+    pub fn new(api_client: EasyProjectClient, _config: crate::config::AppConfig) -> Self {
+        Self { api_client }
     }
 }
 
@@ -468,12 +463,11 @@ impl ToolExecutor for UpdateProjectTool {
 
 pub struct DeleteProjectTool {
     api_client: EasyProjectClient,
-    config: AppConfig,
 }
 
 impl DeleteProjectTool {
-    pub fn new(api_client: EasyProjectClient, config: AppConfig) -> Self {
-        Self { api_client, config }
+    pub fn new(api_client: EasyProjectClient, _config: crate::config::AppConfig) -> Self {
+        Self { api_client }
     }
 }
 

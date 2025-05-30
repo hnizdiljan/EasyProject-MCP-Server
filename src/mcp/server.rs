@@ -1,13 +1,11 @@
-use std::collections::HashMap;
 use serde_json::{json, Value};
 use tracing::{debug, error, info, warn};
-use async_trait::async_trait;
 
 use crate::config::AppConfig;
 use crate::api::EasyProjectClient;
-use crate::tools::{ToolRegistry, ToolExecutor};
+use crate::tools::ToolRegistry;
 
-use super::error::{McpError, McpResult, JsonRpcError};
+use super::error::{McpError, McpResult};
 use super::protocol::{*, PromptsCapability, ResourcesCapability};
 use super::transport::{Transport, create_transport};
 

@@ -1,11 +1,10 @@
 use async_trait::async_trait;
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
 use serde_json::{json, Value};
 use tracing::{debug, error, info};
 use chrono::NaiveDate;
 
 use crate::api::{EasyProjectClient, CreateTimeEntryRequest, CreateTimeEntry};
-use crate::config::AppConfig;
 use crate::mcp::protocol::{CallToolResult, ToolResult};
 use super::executor::ToolExecutor;
 
@@ -13,12 +12,12 @@ use super::executor::ToolExecutor;
 
 pub struct ListTimeEntriesTool {
     api_client: EasyProjectClient,
-    config: AppConfig,
+    _config: crate::config::AppConfig,
 }
 
 impl ListTimeEntriesTool {
-    pub fn new(api_client: EasyProjectClient, config: AppConfig) -> Self {
-        Self { api_client, config }
+    pub fn new(api_client: EasyProjectClient, _config: crate::config::AppConfig) -> Self {
+        Self { api_client, _config }
     }
 }
 
@@ -31,6 +30,7 @@ struct ListTimeEntriesArgs {
     #[serde(default)]
     project_id: Option<i32>,
     #[serde(default)]
+    #[allow(dead_code)]
     issue_id: Option<i32>,
     #[serde(default)]
     user_id: Option<i32>,
@@ -93,7 +93,7 @@ impl ToolExecutor for ListTimeEntriesTool {
             serde_json::from_value(args)?
         } else {
             ListTimeEntriesArgs {
-                limit: Some(self.config.tools.time_entries.default_limit),
+                limit: Some(25), // výchozí limit
                 offset: None,
                 project_id: None,
                 issue_id: None,
@@ -159,17 +159,19 @@ impl ToolExecutor for ListTimeEntriesTool {
 
 // === GET TIME ENTRY TOOL ===
 
+#[allow(dead_code)]
 pub struct GetTimeEntryTool {
     api_client: EasyProjectClient,
-    config: AppConfig,
+    _config: crate::config::AppConfig,
 }
 
 impl GetTimeEntryTool {
-    pub fn new(api_client: EasyProjectClient, config: AppConfig) -> Self {
-        Self { api_client, config }
+    pub fn new(api_client: EasyProjectClient, _config: crate::config::AppConfig) -> Self {
+        Self { api_client, _config }
     }
 }
 
+#[allow(dead_code)]
 #[derive(Debug, Deserialize)]
 struct GetTimeEntryArgs {
     id: i32,
@@ -194,7 +196,7 @@ impl ToolExecutor for GetTimeEntryTool {
         })
     }
     
-    async fn execute(&self, arguments: Option<Value>) -> Result<CallToolResult, Box<dyn std::error::Error + Send + Sync>> {
+    async fn execute(&self, _arguments: Option<Value>) -> Result<CallToolResult, Box<dyn std::error::Error + Send + Sync>> {
         // Zatím není implementováno v API klientovi
         Ok(CallToolResult::error(vec![
             ToolResult::text("get_time_entry zatím není implementováno".to_string())
@@ -206,12 +208,12 @@ impl ToolExecutor for GetTimeEntryTool {
 
 pub struct CreateTimeEntryTool {
     api_client: EasyProjectClient,
-    config: AppConfig,
+    _config: crate::config::AppConfig,
 }
 
 impl CreateTimeEntryTool {
-    pub fn new(api_client: EasyProjectClient, config: AppConfig) -> Self {
-        Self { api_client, config }
+    pub fn new(api_client: EasyProjectClient, _config: crate::config::AppConfig) -> Self {
+        Self { api_client, _config }
     }
 }
 
@@ -335,17 +337,19 @@ impl ToolExecutor for CreateTimeEntryTool {
 
 // === UPDATE TIME ENTRY TOOL ===
 
+#[allow(dead_code)]
 pub struct UpdateTimeEntryTool {
     api_client: EasyProjectClient,
-    config: AppConfig,
+    _config: crate::config::AppConfig,
 }
 
 impl UpdateTimeEntryTool {
-    pub fn new(api_client: EasyProjectClient, config: AppConfig) -> Self {
-        Self { api_client, config }
+    pub fn new(api_client: EasyProjectClient, _config: crate::config::AppConfig) -> Self {
+        Self { api_client, _config }
     }
 }
 
+#[allow(dead_code)]
 #[derive(Debug, Deserialize)]
 struct UpdateTimeEntryArgs {
     id: i32,
@@ -409,7 +413,7 @@ impl ToolExecutor for UpdateTimeEntryTool {
         })
     }
     
-    async fn execute(&self, arguments: Option<Value>) -> Result<CallToolResult, Box<dyn std::error::Error + Send + Sync>> {
+    async fn execute(&self, _arguments: Option<Value>) -> Result<CallToolResult, Box<dyn std::error::Error + Send + Sync>> {
         // Zatím není implementováno v API klientovi
         Ok(CallToolResult::error(vec![
             ToolResult::text("update_time_entry zatím není implementováno".to_string())
@@ -419,17 +423,19 @@ impl ToolExecutor for UpdateTimeEntryTool {
 
 // === DELETE TIME ENTRY TOOL ===
 
+#[allow(dead_code)]
 pub struct DeleteTimeEntryTool {
     api_client: EasyProjectClient,
-    config: AppConfig,
+    _config: crate::config::AppConfig,
 }
 
 impl DeleteTimeEntryTool {
-    pub fn new(api_client: EasyProjectClient, config: AppConfig) -> Self {
-        Self { api_client, config }
+    pub fn new(api_client: EasyProjectClient, _config: crate::config::AppConfig) -> Self {
+        Self { api_client, _config }
     }
 }
 
+#[allow(dead_code)]
 #[derive(Debug, Deserialize)]
 struct DeleteTimeEntryArgs {
     id: i32,
@@ -454,7 +460,7 @@ impl ToolExecutor for DeleteTimeEntryTool {
         })
     }
     
-    async fn execute(&self, arguments: Option<Value>) -> Result<CallToolResult, Box<dyn std::error::Error + Send + Sync>> {
+    async fn execute(&self, _arguments: Option<Value>) -> Result<CallToolResult, Box<dyn std::error::Error + Send + Sync>> {
         // Zatím není implementováno v API klientovi
         Ok(CallToolResult::error(vec![
             ToolResult::text("delete_time_entry zatím není implementováno".to_string())
@@ -466,12 +472,12 @@ impl ToolExecutor for DeleteTimeEntryTool {
 
 pub struct LogTimeTool {
     api_client: EasyProjectClient,
-    config: AppConfig,
+    _config: crate::config::AppConfig,
 }
 
 impl LogTimeTool {
-    pub fn new(api_client: EasyProjectClient, config: AppConfig) -> Self {
-        Self { api_client, config }
+    pub fn new(api_client: EasyProjectClient, _config: crate::config::AppConfig) -> Self {
+        Self { api_client, _config }
     }
 }
 
