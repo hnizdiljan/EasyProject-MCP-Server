@@ -1,0 +1,13 @@
+{
+  "mcpServers": {
+    "easyproject": {
+      "command": "C:\\Users\\hnizd\\source\\repos\\hnizdiljan\\EasyProject-MCP-Server\\target\\release\\easyproject-mcp-server.exe",
+      "args": [],
+      "env": {
+        "EASYPROJECT_API_KEY": "your-api-key-here",
+        "EASYPROJECT_BASE_URL": "https://your-instance.easyproject.com",
+        "PATH": "C:\\msys64\\mingw64\\bin;${PATH}"
+      }
+    }
+  }
+} 

@@ -1,0 +1,61 @@
+[server]
+name = "EasyProject MCP Server"
+version = "1.0.0"
+transport = "stdio"
+
+[easyproject]
+base_url = "https://your-easyproject-instance.com"
+api_version = "v1"
+auth_type = "api_key"
+api_key_header = "X-Redmine-API-Key"
+scopes = []
+
+[http]
+timeout_seconds = 30
+max_retries = 3
+retry_delay_seconds = 1
+user_agent = "EasyProject-MCP-Server/1.0.0"
+
+[rate_limiting]
+enabled = true
+requests_per_minute = 60
+burst_size = 10
+
+[cache]
+enabled = true
+ttl_seconds = 300
+max_entries = 1000
+project_ttl = 600
+user_ttl = 1800
+issue_ttl = 60
+time_entry_ttl = 30
+
+[logging]
+level = "info"
+format = "json"
+target = "stdout"
+
+[tools]
+
+[tools.projects]
+enabled = true
+include_archived = false
+default_limit = 25
+
+[tools.issues]
+enabled = true
+default_limit = 25
+include_attachments = false
+include_relations = false
+
+[tools.users]
+enabled = true
+default_limit = 25
+
+[tools.time_entries]
+enabled = true
+default_limit = 25
+
+[tools.reports]
+enabled = true
+cache_ttl = 3600 

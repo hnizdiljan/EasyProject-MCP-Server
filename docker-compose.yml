@@ -1,0 +1,94 @@
+version: '3.8'
+
+services:
+  easyproject-mcp:
+    build: .
+    image: easyproject-mcp-server:latest
+    container_name: easyproject-mcp-server
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    environment:
+      # EasyProject konfigurace - UPRAVTE TYTO HODNOTY
+      - EASYPROJECT_API_KEY=${EASYPROJECT_API_KEY:-your-api-key-here}
+      - EASYPROJECT_BASE_URL=${EASYPROJECT_BASE_URL:-https://your-instance.easyproject.com}
+      
+      # Volitelné nastavení
+      - MCP_LOG_LEVEL=${MCP_LOG_LEVEL:-info}
+      - RUST_LOG=${RUST_LOG:-info}
+    volumes:
+      # Mount konfigračního souboru (volitelné)
+      - ./config.toml:/app/config.toml:ro
+      
+      # Mount pro logy (volitelné)
+      - ./logs:/app/logs
+    networks:
+      - easyproject-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # Redis pro cache (volitelné - pro budoucí rozšíření)
+  redis:
+    image: redis:7-alpine
+    container_name: easyproject-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - easyproject-network
+    command: redis-server --appendonly yes
+    profiles:
+      - with-redis
+
+  # Prometheus pro monitoring (volitelné)
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: easyproject-prometheus
+    restart: unless-stopped
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
+    networks:
+      - easyproject-network
+    profiles:
+      - monitoring
+
+  # Grafana pro vizualizaci (volitelné)
+  grafana:
+    image: grafana/grafana:latest
+    container_name: easyproject-grafana
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_PASSWORD:-admin}
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./monitoring/grafana/dashboards:/etc/grafana/provisioning/dashboards:ro
+      - ./monitoring/grafana/datasources:/etc/grafana/provisioning/datasources:ro
+    networks:
+      - easyproject-network
+    profiles:
+      - monitoring
+    depends_on:
+      - prometheus
+
+volumes:
+  redis_data:
+    driver: local
+  prometheus_data:
+    driver: local
+  grafana_data:
+    driver: local
+
+networks:
+  easyproject-network:
+    driver: bridge 
