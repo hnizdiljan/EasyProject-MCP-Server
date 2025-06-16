@@ -294,7 +294,7 @@ impl CallToolResult {
     pub fn success(content: Vec<ToolResult>) -> Self {
         Self {
             content,
-            is_error: None,
+            is_error: Some(false),
         }
     }
     

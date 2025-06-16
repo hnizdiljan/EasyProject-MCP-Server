@@ -538,9 +538,26 @@ impl ToolExecutor for LogTimeTool {
     }
     
     async fn execute(&self, arguments: Option<Value>) -> Result<CallToolResult, Box<dyn std::error::Error + Send + Sync>> {
-        let args: LogTimeArgs = serde_json::from_value(
-            arguments.ok_or("Chybí povinné parametry")?
-        )?;
+        let args: LogTimeArgs = match arguments {
+            Some(args) => {
+                debug!("LogTime argumenty: {}", serde_json::to_string_pretty(&args).unwrap_or_else(|_| "Nepodařilo se serializovat".to_string()));
+                match serde_json::from_value(args) {
+                    Ok(args) => args,
+                    Err(e) => {
+                        error!("Chyba při parsování argumentů: {}", e);
+                        return Ok(CallToolResult::error(vec![
+                            ToolResult::text(format!("Chyba při parsování argumentů: {}", e))
+                        ]));
+                    }
+                }
+            }
+            None => {
+                error!("Chybí povinné parametry pro log_time");
+                return Ok(CallToolResult::error(vec![
+                    ToolResult::text("Chybí povinné parametry pro log_time".to_string())
+                ]));
+            }
+        };
         
         debug!("Loguji čas: {:?}", args);
         
@@ -581,6 +598,8 @@ impl ToolExecutor for LogTimeTool {
         };
         
         let request = CreateTimeEntryRequest { time_entry };
+        
+        debug!("Odesílám request pro create_time_entry: {:?}", request);
         
         match self.api_client.create_time_entry(request).await {
             Ok(response) => {

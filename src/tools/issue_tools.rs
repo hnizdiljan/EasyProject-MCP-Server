@@ -443,9 +443,26 @@ impl ToolExecutor for UpdateIssueTool {
     }
     
     async fn execute(&self, arguments: Option<Value>) -> Result<CallToolResult, Box<dyn std::error::Error + Send + Sync>> {
-        let args: UpdateIssueArgs = serde_json::from_value(
-            arguments.ok_or("Chybí argumenty pro aktualizaci úkolu")?
-        )?;
+        let args: UpdateIssueArgs = match arguments {
+            Some(args) => {
+                debug!("UpdateIssue argumenty: {}", serde_json::to_string_pretty(&args).unwrap_or_else(|_| "Nepodařilo se serializovat".to_string()));
+                match serde_json::from_value(args) {
+                    Ok(args) => args,
+                    Err(e) => {
+                        error!("Chyba při parsování argumentů pro aktualizaci úkolu: {}", e);
+                        return Ok(CallToolResult::error(vec![
+                            ToolResult::text(format!("Chyba při parsování argumentů pro aktualizaci úkolu: {}", e))
+                        ]));
+                    }
+                }
+            }
+            None => {
+                error!("Chybí argumenty pro aktualizaci úkolu");
+                return Ok(CallToolResult::error(vec![
+                    ToolResult::text("Chybí argumenty pro aktualizaci úkolu".to_string())
+                ]));
+            }
+        };
         
         debug!("Aktualizuji úkol s ID: {}", args.id);
         
@@ -479,22 +496,29 @@ impl ToolExecutor for UpdateIssueTool {
             }
         };
         
+        debug!("Odesílám request pro update_issue: {:?}", issue_data);
+        
         match self.api_client.update_issue(args.id, issue_data).await {
             Ok(response) => {
+                debug!("Úspěšný response z update_issue API: {:?}", response);
                 let issue_json = serde_json::to_string_pretty(&response.issue)?;
                 info!("Úspěšně aktualizován úkol: {} (ID: {})", response.issue.subject, response.issue.id);
                 
-                Ok(CallToolResult::success(vec![
+                debug!("Vytvářím success CallToolResult pro úkol {}", response.issue.id);
+                let result = CallToolResult::success(vec![
                     ToolResult::text(format!(
                         "Úkol '{}' (ID: {}) byl úspěšně aktualizován:\n\n{}",
                         response.issue.subject,
                         response.issue.id,
                         issue_json
                     ))
-                ]))
+                ]);
+                debug!("CallToolResult vytvořen s is_error: {:?}", result.is_error);
+                Ok(result)
             }
             Err(e) => {
                 error!("Chyba při aktualizaci úkolu {}: {}", args.id, e);
+                debug!("Vytvářím error CallToolResult pro úkol {}", args.id);
                 Ok(CallToolResult::error(vec![
                     ToolResult::text(format!("Chyba při aktualizaci úkolu {}: {}", args.id, e))
                 ]))

@@ -154,7 +154,25 @@ pub struct Version {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub status: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
+    pub effective_date: Option<NaiveDate>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub due_date: Option<NaiveDate>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub wiki_page_title: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub sharing: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub default_project_version: Option<bool>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub easy_external_id: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub project: Option<ProjectReference>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub easy_version_category: Option<Value>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub created_on: Option<DateTime<Utc>>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub updated_on: Option<DateTime<Utc>>,
 }
 
 /// User model podle EasyProject API
@@ -381,4 +399,74 @@ pub struct CreateTimeEntry {
     pub activity_id: i32,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub comments: Option<String>,
+}
+
+// === MILESTONE (VERSION) MODELS ===
+
+/// Milestone/Version response podle EasyProject API
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct VersionsResponse {
+    pub versions: Vec<Version>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub total_count: Option<i32>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub offset: Option<i32>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub limit: Option<i32>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct VersionResponse {
+    pub version: Version,
+}
+
+/// Request model pro vytvoření milníku
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct CreateVersionRequest {
+    pub version: CreateVersion,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct CreateVersion {
+    pub name: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub description: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub effective_date: Option<NaiveDate>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub due_date: Option<NaiveDate>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub status: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub sharing: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub default_project_version: Option<bool>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub easy_external_id: Option<String>,
+}
+
+/// Request model pro aktualizaci milníku
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct UpdateVersionRequest {
+    pub version: UpdateVersion,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct UpdateVersion {
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub name: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub description: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub effective_date: Option<NaiveDate>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub due_date: Option<NaiveDate>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub status: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub sharing: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub default_project_version: Option<bool>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub easy_external_id: Option<String>,
 } 

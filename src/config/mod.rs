@@ -97,6 +97,7 @@ pub struct ToolsConfig {
     pub users: UserToolConfig,
     pub time_entries: TimeEntryToolConfig,
     pub reports: ReportToolConfig,
+    pub milestones: MilestoneToolConfig,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -130,6 +131,12 @@ pub struct TimeEntryToolConfig {
 pub struct ReportToolConfig {
     pub enabled: bool,
     pub cache_ttl: u64,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct MilestoneToolConfig {
+    pub enabled: bool,
+    pub default_limit: u32,
 }
 
 impl AppConfig {
@@ -317,6 +324,10 @@ impl Default for AppConfig {
                 reports: ReportToolConfig {
                     enabled: true,
                     cache_ttl: 3600,
+                },
+                milestones: MilestoneToolConfig {
+                    enabled: true,
+                    default_limit: 25,
                 },
             },
         }

@@ -2,7 +2,7 @@
 
 ## Ready for Deployment!
 
-Tento EXE soubor (3.21 MB) je samostatny a obsahuje vsechny zavislosti.
+Tento EXE soubor (3.45 MB) je samostatny a obsahuje vsechny zavislosti.
 
 ## Systemove pozadavky
 - Windows 10/11 x64
@@ -50,8 +50,8 @@ Po spusteni muzete v Cursor pouzit nastroje jako:
 - log_time - logovani casu
 
 ## Build informace
-- Velikost: 3.21 MB
-- Datum build: 2025-05-31 01:08:56
+- Velikost: 3.45 MB
+- Datum build: 2025-06-12 15:37:33
 - Single-file deployment
 - TLS: Rust-native
 

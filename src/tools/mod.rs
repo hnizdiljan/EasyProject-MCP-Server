@@ -5,6 +5,7 @@ pub mod issue_tools;
 pub mod user_tools;
 pub mod time_entry_tools;
 pub mod report_tools;
+pub mod milestone_tools;
 
 pub use registry::ToolRegistry;
 pub use executor::ToolExecutor; 

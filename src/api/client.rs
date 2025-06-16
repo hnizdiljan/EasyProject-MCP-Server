@@ -74,14 +74,33 @@ impl EasyProjectClient {
             .await
             .map_err(ApiError::Http)?;
 
-        if !response.status().is_success() {
+        let status = response.status();
+        
+        if !status.is_success() {
+            let error_text = response.text().await.unwrap_or_else(|_| "Neznámá chyba".to_string());
             return Err(ApiError::Api {
-                status: response.status().as_u16(),
-                message: format!("HTTP error: {}", response.status()),
+                status: status.as_u16(),
+                message: format!("HTTP error {}: {}", status, error_text),
             });
         }
 
-        response.json::<Value>().await.map_err(ApiError::Http)
+        // Zkontrolujeme, zda odpověď obsahuje data
+        let response_text = response.text().await.map_err(ApiError::Http)?;
+        
+        if response_text.trim().is_empty() {
+            // Prázdná odpověď - vrátíme prázdný objekt
+            debug!("API vrátilo prázdnou odpověď");
+            return Ok(serde_json::json!({}));
+        }
+
+        // Pokusíme se parsovat JSON
+        serde_json::from_str(&response_text).map_err(|e| {
+            debug!("Chyba parsování JSON: {}. Response text: {}", e, response_text);
+            ApiError::Api {
+                status: 500,
+                message: format!("Chyba parsování JSON: {}. Response: {}", e, response_text),
+            }
+        })
     }
 
     /// Získá data z cache nebo provede API volání
@@ -273,6 +292,13 @@ impl EasyProjectClient {
             .json(&issue_data);
 
         let response = self.execute_request(request).await?;
+        
+        // Pokud je odpověď prázdná, nejdříve získáme aktualizovaný úkol
+        if response.as_object().map_or(false, |obj| obj.is_empty()) {
+            debug!("Prázdná odpověď z update_issue, získávám aktualizovaný úkol");
+            return self.get_issue(id, None).await;
+        }
+        
         self.parse_response(response)
     }
 
@@ -362,6 +388,144 @@ impl EasyProjectClient {
 
         let response = self.execute_request(request).await?;
         self.parse_response(response)
+    }
+
+    // === MILESTONE (VERSION) API METHODS ===
+
+    pub async fn list_milestones(&self, limit: Option<u32>, offset: Option<u32>, project_id: Option<i32>, status: Option<String>, easy_query_q: Option<String>) -> ApiResult<VersionsResponse> {
+        let cache_key = format!("milestones_{}_{}_{}_{}_{}", 
+            limit.unwrap_or(25),
+            offset.unwrap_or(0),
+            project_id.unwrap_or(0),
+            status.as_ref().unwrap_or(&"all".to_string()),
+            easy_query_q.as_ref().unwrap_or(&"".to_string())
+        );
+
+        self.get_cached_or_fetch(&cache_key, "milestone", async {
+            let url = format!("{}/versions.json", self.base_url);
+            let mut query_params = Vec::new();
+
+            if let Some(limit) = limit {
+                query_params.push(("limit", limit.to_string()));
+            }
+            if let Some(offset) = offset {
+                query_params.push(("offset", offset.to_string()));
+            }
+            if let Some(status) = status {
+                query_params.push(("status", status));
+            }
+            if let Some(query) = easy_query_q {
+                query_params.push(("easy_query_q", query));
+            }
+
+            let request = self.add_auth(self.http_client.get(&url));
+            let request = if !query_params.is_empty() {
+                request.query(&query_params)
+            } else {
+                request
+            };
+
+            let response = self.execute_request(request).await?;
+            self.parse_response(response)
+        }).await
+    }
+
+    pub async fn get_milestone(&self, id: i32) -> ApiResult<VersionResponse> {
+        let cache_key = format!("milestone_{}", id);
+
+        self.get_cached_or_fetch(&cache_key, "milestone", async {
+            let url = format!("{}/versions/{}.json", self.base_url, id);
+            let request = self.add_auth(self.http_client.get(&url));
+
+            let response = self.execute_request(request).await?;
+            self.parse_response(response)
+        }).await
+    }
+
+    pub async fn create_milestone(
+        &self,
+        project_id: i32,
+        name: String,
+        description: Option<String>,
+        effective_date: Option<String>,
+        due_date: Option<String>,
+        status: Option<String>,
+        sharing: Option<String>,
+        default_project_version: Option<bool>,
+        easy_external_id: Option<String>,
+    ) -> ApiResult<VersionResponse> {
+        let url = format!("{}/projects/{}/versions.json", self.base_url, project_id);
+        
+        let create_version = CreateVersion {
+            name,
+            description,
+            effective_date: effective_date.and_then(|d| chrono::NaiveDate::parse_from_str(&d, "%Y-%m-%d").ok()),
+            due_date: due_date.and_then(|d| chrono::NaiveDate::parse_from_str(&d, "%Y-%m-%d").ok()),
+            status,
+            sharing,
+            default_project_version,
+            easy_external_id,
+        };
+
+        let request_body = CreateVersionRequest { version: create_version };
+        let request = self.add_auth(self.http_client.post(&url))
+            .json(&request_body);
+
+        let response = self.execute_request(request).await?;
+        
+        // Invalidace cache
+        self.invalidate_cache("milestone").await;
+        
+        self.parse_response(response)
+    }
+
+    pub async fn update_milestone(
+        &self,
+        id: i32,
+        name: Option<String>,
+        description: Option<String>,
+        effective_date: Option<String>,
+        due_date: Option<String>,
+        status: Option<String>,
+        sharing: Option<String>,
+        default_project_version: Option<bool>,
+        easy_external_id: Option<String>,
+    ) -> ApiResult<VersionResponse> {
+        let url = format!("{}/versions/{}.json", self.base_url, id);
+        
+        let update_version = UpdateVersion {
+            name,
+            description,
+            effective_date: effective_date.and_then(|d| chrono::NaiveDate::parse_from_str(&d, "%Y-%m-%d").ok()),
+            due_date: due_date.and_then(|d| chrono::NaiveDate::parse_from_str(&d, "%Y-%m-%d").ok()),
+            status,
+            sharing,
+            default_project_version,
+            easy_external_id,
+        };
+
+        let request_body = UpdateVersionRequest { version: update_version };
+        let request = self.add_auth(self.http_client.put(&url))
+            .json(&request_body);
+
+        let response = self.execute_request(request).await?;
+        
+        // Invalidace cache
+        self.invalidate_cache("milestone").await;
+        
+        self.parse_response(response)
+    }
+
+    pub async fn delete_milestone(&self, id: i32) -> ApiResult<()> {
+        let url = format!("{}/versions/{}.json", self.base_url, id);
+        let request = self.add_auth(self.http_client.delete(&url));
+
+        let _response = self.execute_request(request).await?;
+        
+        // Invalidace cache
+        self.invalidate_cache("milestone").await;
+        
+        Ok(())
     }
 
     fn parse_response<T: serde::de::DeserializeOwned>(&self, value: Value) -> ApiResult<T> {

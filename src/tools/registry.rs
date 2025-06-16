@@ -13,6 +13,7 @@ use super::issue_tools::*;
 use super::user_tools::*;
 use super::time_entry_tools::*;
 use super::report_tools::*;
+use super::milestone_tools::*;
 
 pub struct ToolRegistry {
     tools: HashMap<String, Arc<dyn ToolExecutor>>,
@@ -101,6 +102,23 @@ impl ToolRegistry {
             tools.insert(get_dashboard_data.name().to_string(), get_dashboard_data);
             
             info!("Registrovány report tools");
+        }
+        
+        // Milestone tools
+        if config.tools.milestones.enabled {
+            let list_milestones = Arc::new(ListMilestonesTool::new(api_client.clone(), config.clone()));
+            let get_milestone = Arc::new(GetMilestoneTool::new(api_client.clone(), config.clone()));
+            let create_milestone = Arc::new(CreateMilestoneTool::new(api_client.clone(), config.clone()));
+            let update_milestone = Arc::new(UpdateMilestoneTool::new(api_client.clone(), config.clone()));
+            let delete_milestone = Arc::new(DeleteMilestoneTool::new(api_client.clone(), config.clone()));
+            
+            tools.insert(list_milestones.name().to_string(), list_milestones);
+            tools.insert(get_milestone.name().to_string(), get_milestone);
+            tools.insert(create_milestone.name().to_string(), create_milestone);
+            tools.insert(update_milestone.name().to_string(), update_milestone);
+            tools.insert(delete_milestone.name().to_string(), delete_milestone);
+            
+            info!("Registrovány milestone tools");
         }
         
         info!("Celkem registrováno {} tools", tools.len());
