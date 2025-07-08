@@ -257,7 +257,7 @@ impl ToolExecutor for CreateIssueTool {
             },
             "description": {
                 "type": "string",
-                "description": "Popis úkolu"
+                "description": "Popis úkolu (může obsahovat HTML tagy pro formátování)"
             },
             "category_id": {
                 "type": "integer",
@@ -405,7 +405,7 @@ impl ToolExecutor for UpdateIssueTool {
             },
             "description": {
                 "type": "string",
-                "description": "Nový popis úkolu"
+                "description": "Nový popis úkolu (může obsahovat HTML tagy pro formátování)"
             },
             "status_id": {
                 "type": "integer",

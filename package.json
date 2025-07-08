@@ -1,0 +1,63 @@
+{
+  "name": "easyproject-mcp-server",
+  "version": "0.1.0",
+  "description": "Model Context Protocol server for EasyProject API integration",
+  "main": "lib/index.js",
+  "bin": {
+    "easyproject-mcp-server": "bin/easyproject-mcp-server"
+  },
+  "scripts": {
+    "postinstall": "node scripts/postinstall.js",
+    "build": "node scripts/build.js",
+    "test": "node scripts/test.js",
+    "prepublishOnly": "node scripts/prepublish.js"
+  },
+  "files": [
+    "lib/",
+    "bin/",
+    "scripts/",
+    "README.md",
+    "LICENSE"
+  ],
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "easyproject",
+    "api",
+    "cursor",
+    "ai",
+    "project-management"
+  ],
+  "author": "EasyProject MCP Team",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/your-org/easyproject-mcp-server.git"
+  },
+  "homepage": "https://github.com/your-org/easyproject-mcp-server#readme",
+  "bugs": {
+    "url": "https://github.com/your-org/easyproject-mcp-server/issues"
+  },
+  "engines": {
+    "node": ">=14.0.0"
+  },
+  "os": [
+    "win32",
+    "darwin",
+    "linux"
+  ],
+  "cpu": [
+    "x64",
+    "arm64"
+  ],
+  "devDependencies": {
+    "tar": "^6.2.0"
+  },
+  "optionalDependencies": {
+    "easyproject-mcp-server-win32-x64": "0.1.0",
+    "easyproject-mcp-server-darwin-x64": "0.1.0",
+    "easyproject-mcp-server-darwin-arm64": "0.1.0", 
+    "easyproject-mcp-server-linux-x64": "0.1.0",
+    "easyproject-mcp-server-linux-arm64": "0.1.0"
+  }
+} 

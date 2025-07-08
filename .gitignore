@@ -399,3 +399,17 @@ FodyWeavers.xsd
 
 # JetBrains Rider
 *.sln.iml
+
+# NPM Package specific
+npm-dist/
+*.tgz
+README-NPM.md
+LICENSE
+package-lock.json
+
+# NPM build artifacts
+bin/easyproject-mcp-server*
+!bin/.gitkeep
+
+
+*.exe

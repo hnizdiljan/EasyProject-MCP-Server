@@ -51,7 +51,7 @@ Po spusteni muzete v Cursor pouzit nastroje jako:
 
 ## Build informace
 - Velikost: 3.45 MB
-- Datum build: 2025-06-12 15:37:33
+- Datum build: 2025-06-23 09:48:53
 - Single-file deployment
 - TLS: Rust-native
 
