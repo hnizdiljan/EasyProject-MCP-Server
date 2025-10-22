@@ -27,6 +27,10 @@ struct ListProjectsArgs {
     offset: Option<u32>,
     #[serde(default)]
     include_archived: Option<bool>,
+    #[serde(default)]
+    search: Option<String>,
+    #[serde(default)]
+    sort: Option<String>,
 }
 
 #[async_trait]
@@ -34,11 +38,13 @@ impl ToolExecutor for ListProjectsTool {
     fn name(&self) -> &str {
         "list_projects"
     }
-    
+
     fn description(&self) -> &str {
-        "Získá seznam všech projektů v EasyProject systému s možností filtrování a stránkování"
+        "Získá seznam všech projektů v EasyProject systému s možností fulltextového vyhledávání, filtrování a řazení. \
+        \n\nPoužití: Pro vyhledání projektů podle názvu nebo identifikátoru použijte parametr 'search'. \
+        \nPříklad: search='Webový projekt' najde všechny projekty obsahující tento text v názvu nebo identifikátoru."
     }
-    
+
     fn input_schema(&self) -> Value {
         json!({
             "limit": {
@@ -48,17 +54,25 @@ impl ToolExecutor for ListProjectsTool {
                 "maximum": 100
             },
             "offset": {
-                "type": "integer", 
+                "type": "integer",
                 "description": "Počet projektů k přeskočení pro stránkování",
                 "minimum": 0
             },
             "include_archived": {
                 "type": "boolean",
                 "description": "Zda zahrnout archivované projekty (výchozí: false)"
+            },
+            "search": {
+                "type": "string",
+                "description": "Fulltextové vyhledávání v názvech a identifikátorech projektů (např. 'webový projekt')"
+            },
+            "sort": {
+                "type": "string",
+                "description": "Řazení výsledků (např. 'name' nebo 'created_on:desc'). Formát: 'pole' nebo 'pole:desc'"
             }
         })
     }
-    
+
     async fn execute(&self, arguments: Option<Value>) -> Result<CallToolResult, Box<dyn std::error::Error + Send + Sync>> {
         let args: ListProjectsArgs = if let Some(args) = arguments {
             serde_json::from_value(args)?
@@ -67,12 +81,14 @@ impl ToolExecutor for ListProjectsTool {
                 limit: Some(25),
                 offset: None,
                 include_archived: Some(false),
+                search: None,
+                sort: None,
             }
         };
-        
+
         debug!("Získávám seznam projektů s parametry: {:?}", args);
-        
-        match self.api_client.list_projects(args.limit, args.offset, args.include_archived).await {
+
+        match self.api_client.list_projects(args.limit, args.offset, args.include_archived, args.search, None, args.sort).await {
             Ok(response) => {
                 let projects_json = serde_json::to_string_pretty(&response)?;
                 info!("Úspěšně získáno {} projektů", response.projects.len());

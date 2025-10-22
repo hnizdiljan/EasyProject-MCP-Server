@@ -120,7 +120,7 @@ impl ToolExecutor for GenerateProjectReportTool {
         
         // 2. Statistiky úkolů (pokud je požadováno)
         if include_issues {
-            match self.api_client.list_issues(Some(args.project_id), Some(1000), None, None).await {
+            match self.api_client.list_issues(Some(args.project_id), Some(1000), None, None, None, None, None, None, None, None, None).await {
                 Ok(issues_response) => {
                     let issues = &issues_response.issues;
                     
@@ -264,7 +264,7 @@ impl ToolExecutor for GenerateProjectReportTool {
         // 4. Přehled uživatelů (pokud je požadováno)
         if include_users {
             // Získáme seznam všech uživatelů a pak filtrujeme ty, kteří pracují na projektu
-            match self.api_client.list_users(Some(100), None).await {
+            match self.api_client.list_users(Some(100), None, None, None, None, None).await {
                 Ok(users_response) => {
                     // V reálné implementaci bychom získali pouze uživatele projektu
                     // Pro demonstraci použijeme všechny uživatele
@@ -383,7 +383,7 @@ impl ToolExecutor for GetDashboardDataTool {
         });
         
         // 1. Přehled projektů
-        match self.api_client.list_projects(Some(100), None, Some(false)).await {
+        match self.api_client.list_projects(Some(100), None, Some(false), None, None, None).await {
             Ok(projects_response) => {
                 let projects = if let Some(ref project_ids) = args.project_ids {
                     projects_response.projects.into_iter()
@@ -412,7 +412,7 @@ impl ToolExecutor for GetDashboardDataTool {
         }
         
         // 2. Přehled úkolů
-        match self.api_client.list_issues(None, Some(1000), None, None).await {
+        match self.api_client.list_issues(None, Some(1000), None, None, None, None, None, None, None, None, None).await {
             Ok(issues_response) => {
                 let mut issues = issues_response.issues;
                 

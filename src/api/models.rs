@@ -470,3 +470,17 @@ pub struct UpdateVersion {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub easy_external_id: Option<String>,
 } 
+/// Enumeration value (ID + Name)
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct EnumerationValue {
+    pub id: i32,
+    pub name: String,
+}
+
+/// Issue enumerations response
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct IssueEnumerationsResponse {
+    pub statuses: Vec<EnumerationValue>,
+    pub priorities: Vec<EnumerationValue>,
+    pub trackers: Vec<EnumerationValue>,
+}

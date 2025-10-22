@@ -149,11 +149,14 @@ impl EasyProjectClient {
 
     // === PROJECT API METHODS ===
 
-    pub async fn list_projects(&self, limit: Option<u32>, offset: Option<u32>, include_archived: Option<bool>) -> ApiResult<ProjectsResponse> {
-        let cache_key = format!("projects_{}_{}_{}",
+    pub async fn list_projects(&self, limit: Option<u32>, offset: Option<u32>, include_archived: Option<bool>, easy_query_q: Option<String>, set_filter: Option<bool>, sort: Option<String>) -> ApiResult<ProjectsResponse> {
+        let cache_key = format!("projects_{}_{}_{}_{}_{}_{}",
             limit.unwrap_or(25),
             offset.unwrap_or(0),
-            include_archived.unwrap_or(false)
+            include_archived.unwrap_or(false),
+            easy_query_q.as_ref().unwrap_or(&"".to_string()),
+            set_filter.unwrap_or(false),
+            sort.as_ref().unwrap_or(&"".to_string())
         );
 
         self.get_cached_or_fetch(&cache_key, "project", async {
@@ -165,6 +168,16 @@ impl EasyProjectClient {
             }
             if let Some(offset) = offset {
                 query_params.push(("offset", offset.to_string()));
+            }
+            if let Some(query) = easy_query_q {
+                query_params.push(("easy_query_q", query));
+                // Pokud je easy_query_q zadáno, automaticky aktivujeme set_filter
+                query_params.push(("set_filter", "1".to_string()));
+            } else if let Some(true) = set_filter {
+                query_params.push(("set_filter", "1".to_string()));
+            }
+            if let Some(sort) = sort {
+                query_params.push(("sort", sort));
             }
 
             let request = self.add_auth(self.http_client.get(&url));
@@ -228,12 +241,19 @@ impl EasyProjectClient {
 
     // === ISSUE API METHODS ===
 
-    pub async fn list_issues(&self, project_id: Option<i32>, limit: Option<u32>, offset: Option<u32>, include: Option<Vec<String>>) -> ApiResult<IssuesResponse> {
-        let cache_key = format!("issues_{}_{}_{}_{}",
+    pub async fn list_issues(&self, project_id: Option<i32>, limit: Option<u32>, offset: Option<u32>, include: Option<Vec<String>>, easy_query_q: Option<String>, set_filter: Option<bool>, sort: Option<String>, assigned_to_id: Option<i32>, status_id: Option<i32>, tracker_id: Option<i32>, priority_id: Option<i32>) -> ApiResult<IssuesResponse> {
+        let cache_key = format!("issues_{}_{}_{}_{}_{}_{}_{}_{}_{}_{}_{}",
             project_id.map(|id| id.to_string()).unwrap_or_else(|| "all".to_string()),
             limit.unwrap_or(25),
             offset.unwrap_or(0),
-            include.as_ref().map(|i| i.join(",")).unwrap_or_else(|| "none".to_string())
+            include.as_ref().map(|i| i.join(",")).unwrap_or_else(|| "none".to_string()),
+            easy_query_q.as_ref().unwrap_or(&"".to_string()),
+            set_filter.unwrap_or(false),
+            sort.as_ref().unwrap_or(&"".to_string()),
+            assigned_to_id.unwrap_or(0),
+            status_id.unwrap_or(0),
+            tracker_id.unwrap_or(0),
+            priority_id.unwrap_or(0)
         );
 
         self.get_cached_or_fetch(&cache_key, "issue", async {
@@ -251,6 +271,28 @@ impl EasyProjectClient {
             }
             if let Some(include) = include {
                 query_params.push(("include", include.join(",")));
+            }
+            if let Some(query) = easy_query_q {
+                query_params.push(("easy_query_q", query));
+                // Pokud je easy_query_q zadáno, automaticky aktivujeme set_filter
+                query_params.push(("set_filter", "1".to_string()));
+            } else if let Some(true) = set_filter {
+                query_params.push(("set_filter", "1".to_string()));
+            }
+            if let Some(sort) = sort {
+                query_params.push(("sort", sort));
+            }
+            if let Some(assigned_to_id) = assigned_to_id {
+                query_params.push(("assigned_to_id", assigned_to_id.to_string()));
+            }
+            if let Some(status_id) = status_id {
+                query_params.push(("status_id", status_id.to_string()));
+            }
+            if let Some(tracker_id) = tracker_id {
+                query_params.push(("tracker_id", tracker_id.to_string()));
+            }
+            if let Some(priority_id) = priority_id {
+                query_params.push(("priority_id", priority_id.to_string()));
             }
 
             let request = self.add_auth(self.http_client.get(&url))
@@ -304,8 +346,14 @@ impl EasyProjectClient {
 
     // === USER API METHODS ===
 
-    pub async fn list_users(&self, limit: Option<u32>, offset: Option<u32>) -> ApiResult<UsersResponse> {
-        let cache_key = format!("users_{}_{}", limit.unwrap_or(25), offset.unwrap_or(0));
+    pub async fn list_users(&self, limit: Option<u32>, offset: Option<u32>, easy_query_q: Option<String>, set_filter: Option<bool>, sort: Option<String>, status: Option<String>) -> ApiResult<UsersResponse> {
+        let cache_key = format!("users_{}_{}_{}_{}_{}",
+            limit.unwrap_or(25),
+            offset.unwrap_or(0),
+            easy_query_q.as_ref().unwrap_or(&"".to_string()),
+            set_filter.unwrap_or(false),
+            sort.as_ref().unwrap_or(&"".to_string())
+        );
 
         self.get_cached_or_fetch(&cache_key, "user", async {
             let url = format!("{}/users.json", self.base_url);
@@ -316,6 +364,19 @@ impl EasyProjectClient {
             }
             if let Some(offset) = offset {
                 query_params.push(("offset", offset.to_string()));
+            }
+            if let Some(query) = easy_query_q {
+                query_params.push(("easy_query_q", query));
+                // Pokud je easy_query_q zadáno, automaticky aktivujeme set_filter
+                query_params.push(("set_filter", "1".to_string()));
+            } else if let Some(true) = set_filter {
+                query_params.push(("set_filter", "1".to_string()));
+            }
+            if let Some(sort) = sort {
+                query_params.push(("sort", sort));
+            }
+            if let Some(status) = status {
+                query_params.push(("status", status));
             }
 
             let request = self.add_auth(self.http_client.get(&url))
@@ -528,9 +589,97 @@ impl EasyProjectClient {
         Ok(())
     }
 
+    // === ENUMERATION HELPER METHODS ===
+
+    /// Interně získá číselníky pro issues pomocí paginace
+    /// Skenuje issues a extrahuje všechny unikátní hodnoty pro status, priority, tracker
+    pub async fn get_issue_enumerations(&self, project_id: Option<i32>) -> ApiResult<IssueEnumerationsResponse> {
+        use std::collections::HashMap;
+
+        debug!("Interně získávám číselníky pro issues, project_id: {:?}", project_id);
+
+        let mut statuses: HashMap<i32, String> = HashMap::new();
+        let mut priorities: HashMap<i32, String> = HashMap::new();
+        let mut trackers: HashMap<i32, String> = HashMap::new();
+
+        let mut offset = 0;
+        let limit = 100;
+        let max_iterations = 20; // Max 2000 issues pro skenování
+        let mut iteration = 0;
+
+        loop {
+            iteration += 1;
+            if iteration > max_iterations {
+                debug!("Dosažen maximální počet iterací ({}) při skenování issues", max_iterations);
+                break;
+            }
+
+            // Interně získáme stránku issues
+            let response = self.list_issues(
+                project_id,
+                Some(limit),
+                Some(offset),
+                None,
+                None,
+                None,
+                None,
+                None,
+                None,
+                None,
+                None
+            ).await?;
+
+            if response.issues.is_empty() {
+                debug!("Žádné další issues k zpracování");
+                break;
+            }
+
+            // Extrahujeme číselníky z aktuální stránky
+            for issue in &response.issues {
+                statuses.insert(issue.status.id, issue.status.name.clone());
+                priorities.insert(issue.priority.id, issue.priority.name.clone());
+                trackers.insert(issue.tracker.id, issue.tracker.name.clone());
+            }
+
+            // Zkontrolujeme, jestli jsou další záznamy
+            let total = response.total_count.unwrap_or(response.issues.len() as i32);
+            offset += limit;
+
+            if offset >= total as u32 {
+                debug!("Zpracovány všechny issues ({})", total);
+                break;
+            }
+        }
+
+        // Převedeme HashMapy na seřazené Vec
+        let mut status_list: Vec<_> = statuses.into_iter()
+            .map(|(id, name)| EnumerationValue { id, name })
+            .collect();
+        status_list.sort_by_key(|v| v.id);
+
+        let mut priority_list: Vec<_> = priorities.into_iter()
+            .map(|(id, name)| EnumerationValue { id, name })
+            .collect();
+        priority_list.sort_by_key(|v| v.id);
+
+        let mut tracker_list: Vec<_> = trackers.into_iter()
+            .map(|(id, name)| EnumerationValue { id, name })
+            .collect();
+        tracker_list.sort_by_key(|v| v.id);
+
+        info!("Získány číselníky: {} statusů, {} priorit, {} trackerů",
+            status_list.len(), priority_list.len(), tracker_list.len());
+
+        Ok(IssueEnumerationsResponse {
+            statuses: status_list,
+            priorities: priority_list,
+            trackers: tracker_list,
+        })
+    }
+
     fn parse_response<T: serde::de::DeserializeOwned>(&self, value: Value) -> ApiResult<T> {
         debug!("Parsování API response: {}", serde_json::to_string_pretty(&value).unwrap_or_else(|_| "Nepodařilo se serializovat".to_string()));
-        serde_json::from_value(value).map_err(|e| 
+        serde_json::from_value(value).map_err(|e|
             ApiError::Api {
                 status: 500,
                 message: format!("Chyba parsování JSON: {}", e),

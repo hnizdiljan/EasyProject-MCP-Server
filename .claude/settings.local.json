@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(cargo build:*)",
+      "Read(//c/MCP_Servers/EasyProject/**)",
+      "Bash(tasklist:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

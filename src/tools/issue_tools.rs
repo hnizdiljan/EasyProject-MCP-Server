@@ -30,6 +30,18 @@ struct ListIssuesArgs {
     offset: Option<u32>,
     #[serde(default)]
     include: Option<Vec<String>>,
+    #[serde(default)]
+    search: Option<String>,
+    #[serde(default)]
+    sort: Option<String>,
+    #[serde(default)]
+    assigned_to_id: Option<i32>,
+    #[serde(default)]
+    status_id: Option<i32>,
+    #[serde(default)]
+    tracker_id: Option<i32>,
+    #[serde(default)]
+    priority_id: Option<i32>,
 }
 
 #[async_trait]
@@ -37,11 +49,19 @@ impl ToolExecutor for ListIssuesTool {
     fn name(&self) -> &str {
         "list_issues"
     }
-    
+
     fn description(&self) -> &str {
-        "Získá seznam úkolů (issues) s možností filtrování podle projektu a stránkování"
+        "Získá seznam úkolů s možností fulltextového vyhledávání a pokročilého filtrování. \
+        \n\nPoužití: \
+        \n- Pro vyhledání úkolů podle názvu nebo popisu použijte 'search' \
+        \n- Pro filtrování úkolů konkrétního uživatele použijte 'assigned_to_id' \
+        \n- Pro filtrování úkolů v projektu použijte 'project_id' \
+        \n- Pro zjištění správných ID pro status_id, priority_id a tracker_id nejprve zavolejte 'get_issue_enumerations' \
+        \n\nPříklad použití: \
+        \n1. Zavolejte get_issue_enumerations pro získání číselníků \
+        \n2. Použijte list_issues s konkrétními ID: {\"search\": \"login\", \"status_id\": 2, \"priority_id\": 4}"
     }
-    
+
     fn input_schema(&self) -> Value {
         json!({
             "project_id": {
@@ -66,25 +86,67 @@ impl ToolExecutor for ListIssuesTool {
                     "type": "string",
                     "enum": ["attachments", "relations", "total_estimated_time", "spent_time", "checklists"]
                 }
+            },
+            "search": {
+                "type": "string",
+                "description": "Fulltextové vyhledávání v názvech a popisech úkolů (např. 'implementace login')"
+            },
+            "sort": {
+                "type": "string",
+                "description": "Řazení výsledků (např. 'priority:desc' nebo 'due_date'). Formát: 'pole' nebo 'pole:desc'"
+            },
+            "assigned_to_id": {
+                "type": "integer",
+                "description": "ID uživatele pro filtrování úkolů přiřazených tomuto uživateli"
+            },
+            "status_id": {
+                "type": "integer",
+                "description": "ID statusu pro filtrování úkolů (např. 1=Nový, 2=Probíhá, 3=Vyřešen)"
+            },
+            "tracker_id": {
+                "type": "integer",
+                "description": "ID trackeru/typu úkolu (např. 1=Bug, 2=Feature, 3=Support)"
+            },
+            "priority_id": {
+                "type": "integer",
+                "description": "ID priority úkolu (např. 1=Nízká, 2=Normální, 3=Vysoká, 4=Urgentní)"
             }
         })
     }
-    
+
     async fn execute(&self, arguments: Option<Value>) -> Result<CallToolResult, Box<dyn std::error::Error + Send + Sync>> {
         let args: ListIssuesArgs = if let Some(args) = arguments {
             serde_json::from_value(args)?
         } else {
             ListIssuesArgs {
                 project_id: None,
-                limit: Some(25), // výchozí limit
+                limit: Some(25),
                 offset: None,
                 include: None,
+                search: None,
+                sort: None,
+                assigned_to_id: None,
+                status_id: None,
+                tracker_id: None,
+                priority_id: None,
             }
         };
-        
+
         debug!("Získávám seznam úkolů s parametry: {:?}", args);
-        
-        match self.api_client.list_issues(args.project_id, args.limit, args.offset, args.include).await {
+
+        match self.api_client.list_issues(
+            args.project_id,
+            args.limit,
+            args.offset,
+            args.include,
+            args.search,
+            None, // set_filter
+            args.sort,
+            args.assigned_to_id,
+            args.status_id,
+            args.tracker_id,
+            args.priority_id
+        ).await {
             Ok(response) => {
                 let issues_json = serde_json::to_string_pretty(&response)?;
                 info!("Úspěšně získáno {} úkolů", response.issues.len());

@@ -25,6 +25,12 @@ struct ListUsersArgs {
     limit: Option<u32>,
     #[serde(default)]
     offset: Option<u32>,
+    #[serde(default)]
+    search: Option<String>,
+    #[serde(default)]
+    sort: Option<String>,
+    #[serde(default)]
+    status: Option<String>,
 }
 
 #[async_trait]
@@ -32,11 +38,14 @@ impl ToolExecutor for ListUsersTool {
     fn name(&self) -> &str {
         "list_users"
     }
-    
+
     fn description(&self) -> &str {
-        "Získá seznam všech uživatelů v EasyProject systému s možností stránkování"
+        "Získá seznam všech uživatelů v EasyProject systému s možností fulltextového vyhledávání a filtrování. \
+        \n\nPoužití: Pro vyhledání uživatelů podle jména nebo emailu použijte parametr 'search'. \
+        Pro filtrování podle stavu použijte 'status' (např. 'active' pro aktivní uživatele). \
+        \nPříklad: search='Jan Novák' najde všechny uživatele obsahující tento text ve jménu."
     }
-    
+
     fn input_schema(&self) -> Value {
         json!({
             "limit": {
@@ -49,10 +58,23 @@ impl ToolExecutor for ListUsersTool {
                 "type": "integer",
                 "description": "Počet uživatelů k přeskočení pro stránkování",
                 "minimum": 0
+            },
+            "search": {
+                "type": "string",
+                "description": "Fulltextové vyhledávání ve jménech a emailech uživatelů (např. 'Jan Novák' nebo 'jan@firma.cz')"
+            },
+            "sort": {
+                "type": "string",
+                "description": "Řazení výsledků (např. 'lastname' nebo 'created_on:desc'). Formát: 'pole' nebo 'pole:desc'"
+            },
+            "status": {
+                "type": "string",
+                "description": "Filtrování podle stavu uživatele",
+                "enum": ["active", "locked", "registered"]
             }
         })
     }
-    
+
     async fn execute(&self, arguments: Option<Value>) -> Result<CallToolResult, Box<dyn std::error::Error + Send + Sync>> {
         let args: ListUsersArgs = if let Some(args) = arguments {
             serde_json::from_value(args)?
@@ -60,12 +82,15 @@ impl ToolExecutor for ListUsersTool {
             ListUsersArgs {
                 limit: Some(25),
                 offset: None,
+                search: None,
+                sort: None,
+                status: None,
             }
         };
-        
+
         debug!("Získávám seznam uživatelů s parametry: {:?}", args);
-        
-        match self.api_client.list_users(args.limit, args.offset).await {
+
+        match self.api_client.list_users(args.limit, args.offset, args.search, None, args.sort, args.status).await {
             Ok(response) => {
                 let users_json = serde_json::to_string_pretty(&response)?;
                 info!("Úspěšně získáno {} uživatelů", response.users.len());
@@ -227,7 +252,7 @@ impl ToolExecutor for GetUserWorkloadTool {
         };
         
         // 2. Získáme přiřazené úkoly uživatele
-        let issues_response = match self.api_client.list_issues(None, Some(100), None, None).await {
+        let issues_response = match self.api_client.list_issues(None, Some(100), None, None, None, None, None, None, None, None, None).await {
             Ok(response) => response,
             Err(e) => {
                 error!("Chyba při získávání úkolů: {}", e);

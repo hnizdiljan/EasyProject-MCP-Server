@@ -14,6 +14,7 @@ use super::user_tools::*;
 use super::time_entry_tools::*;
 use super::report_tools::*;
 use super::milestone_tools::*;
+use super::enumeration_tools::*;
 
 pub struct ToolRegistry {
     tools: HashMap<String, Arc<dyn ToolExecutor>>,
@@ -50,14 +51,16 @@ impl ToolRegistry {
             let update_issue = Arc::new(UpdateIssueTool::new(api_client.clone(), config.clone()));
             let assign_issue = Arc::new(AssignIssueTool::new(api_client.clone(), config.clone()));
             let complete_issue = Arc::new(CompleteIssueTool::new(api_client.clone(), config.clone()));
-            
+            let get_issue_enumerations = Arc::new(GetIssueEnumerationsTool::new(api_client.clone(), config.clone()));
+
             tools.insert(list_issues.name().to_string(), list_issues);
             tools.insert(get_issue.name().to_string(), get_issue);
             tools.insert(create_issue.name().to_string(), create_issue);
             tools.insert(update_issue.name().to_string(), update_issue);
             tools.insert(assign_issue.name().to_string(), assign_issue);
             tools.insert(complete_issue.name().to_string(), complete_issue);
-            
+            tools.insert(get_issue_enumerations.name().to_string(), get_issue_enumerations);
+
             info!("Registrovány issue tools");
         }
         
