@@ -401,11 +401,12 @@ impl EasyProjectClient {
 
     // === TIME ENTRY API METHODS ===
 
-    pub async fn list_time_entries(&self, project_id: Option<i32>, user_id: Option<i32>, limit: Option<u32>, offset: Option<u32>, from_date: Option<String>, to_date: Option<String>) -> ApiResult<TimeEntriesResponse> {
-        let cache_key = format!("time_entries_{}_{}_{}_{}_{}_{}",
+    pub async fn list_time_entries(&self, project_id: Option<i32>, issue_id: Option<i32>, user_id: Option<i32>, limit: Option<u32>, offset: Option<u32>, from_date: Option<String>, to_date: Option<String>) -> ApiResult<TimeEntriesResponse> {
+        let cache_key = format!("time_entries_{}_{}_{}_{}_{}_{}_{}",
             project_id.map(|id| id.to_string()).unwrap_or_else(|| "all".to_string()),
+            issue_id.map(|id| id.to_string()).unwrap_or_else(|| "all".to_string()),
             user_id.map(|id| id.to_string()).unwrap_or_else(|| "all".to_string()),
-            limit.unwrap_or(25), 
+            limit.unwrap_or(25),
             offset.unwrap_or(0),
             from_date.as_ref().unwrap_or(&"none".to_string()),
             to_date.as_ref().unwrap_or(&"none".to_string())
@@ -415,8 +416,20 @@ impl EasyProjectClient {
             let url = format!("{}/time_entries.json", self.base_url);
             let mut query_params = Vec::new();
 
+            // Zjistíme, jestli je použit nějaký filtr
+            let has_filter = project_id.is_some() || issue_id.is_some() || user_id.is_some()
+                          || from_date.is_some() || to_date.is_some();
+
+            // Pokud je použit filtr, musíme nastavit set_filter=1
+            if has_filter {
+                query_params.push(("set_filter", "1".to_string()));
+            }
+
             if let Some(project_id) = project_id {
                 query_params.push(("project_id", project_id.to_string()));
+            }
+            if let Some(issue_id) = issue_id {
+                query_params.push(("issue_id", issue_id.to_string()));
             }
             if let Some(user_id) = user_id {
                 query_params.push(("user_id", user_id.to_string()));
@@ -432,6 +445,32 @@ impl EasyProjectClient {
             }
             if let Some(to_date) = to_date {
                 query_params.push(("to", to_date));
+            }
+
+            let request = self.add_auth(self.http_client.get(&url))
+                .query(&query_params);
+
+            let response = self.execute_request(request).await?;
+            self.parse_response(response)
+        }).await
+    }
+
+    pub async fn get_issue_time_entries(&self, issue_id: i32, limit: Option<u32>, offset: Option<u32>) -> ApiResult<TimeEntriesResponse> {
+        let cache_key = format!("issue_{}_time_entries_{}_{}",
+            issue_id,
+            limit.unwrap_or(25),
+            offset.unwrap_or(0)
+        );
+
+        self.get_cached_or_fetch(&cache_key, "time_entry", async {
+            let url = format!("{}/issues/{}/time_entries.json", self.base_url, issue_id);
+            let mut query_params = Vec::new();
+
+            if let Some(limit) = limit {
+                query_params.push(("limit", limit.to_string()));
+            }
+            if let Some(offset) = offset {
+                query_params.push(("offset", offset.to_string()));
             }
 
             let request = self.add_auth(self.http_client.get(&url))

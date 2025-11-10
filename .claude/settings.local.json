@@ -3,7 +3,12 @@
     "allow": [
       "Bash(cargo build:*)",
       "Read(//c/MCP_Servers/EasyProject/**)",
-      "Bash(tasklist:*)"
+      "Bash(tasklist:*)",
+      "Bash(npm whoami:*)",
+      "Bash(powershell -ExecutionPolicy Bypass -File .npm-deploy.ps1 -Version \"0.2.0\" -BuildAll)",
+      "Bash(powershell -ExecutionPolicy Bypass -Command \"& ./npm-deploy.ps1 -Version ''0.2.0'' -BuildAll\")",
+      "Bash(powershell -ExecutionPolicy Bypass -Command \"& ./npm-deploy.ps1 -Version ''0.2.1'' -BuildAll\")",
+      "Bash(powershell -ExecutionPolicy Bypass -Command \"& ./npm-deploy.ps1 -Version ''0.2.2'' -BuildAll\")"
     ],
     "deny": [],
     "ask": []

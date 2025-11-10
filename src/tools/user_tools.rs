@@ -270,7 +270,7 @@ impl ToolExecutor for GetUserWorkloadTool {
             .collect();
         
         // 3. Získáme časové záznamy uživatele
-        let time_entries_response = match self.api_client.list_time_entries(None, Some(args.id), Some(100), None, args.from_date.clone(), args.to_date.clone()).await {
+        let time_entries_response = match self.api_client.list_time_entries(None, None, Some(args.id), Some(100), None, args.from_date.clone(), args.to_date.clone()).await {
             Ok(response) => response,
             Err(e) => {
                 error!("Chyba při získávání časových záznamů: {}", e);

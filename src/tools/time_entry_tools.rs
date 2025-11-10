@@ -30,7 +30,6 @@ struct ListTimeEntriesArgs {
     #[serde(default)]
     project_id: Option<i32>,
     #[serde(default)]
-    #[allow(dead_code)]
     issue_id: Option<i32>,
     #[serde(default)]
     user_id: Option<i32>,
@@ -124,6 +123,7 @@ impl ToolExecutor for ListTimeEntriesTool {
         
         match self.api_client.list_time_entries(
             args.project_id,
+            args.issue_id,
             args.user_id,
             args.limit,
             args.offset,
